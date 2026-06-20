@@ -252,7 +252,7 @@ export default function GameScreen({ onReveal }: Props) {
 
   if (!pricesLoaded) {
     return (
-      <div className="screen-dark" style={{ padding: 16, maxWidth: 480, margin: '0 auto', minHeight: 500, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div className="screen-dark" style={{ padding: 16, maxWidth: 900, margin: '0 auto', minHeight: 500, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div style={{ textAlign: 'center' }}>
           <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 8 }}>Loading live market data...</div>
           <div style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>Fetching real prices from Yahoo Finance</div>
@@ -262,7 +262,7 @@ export default function GameScreen({ onReveal }: Props) {
   }
 
   return (
-    <div className="screen-dark" style={{ padding: 16, maxWidth: 480, margin: '0 auto' }}>
+    <div className="screen-dark" style={{ padding: 16, maxWidth: 900, margin: '0 auto' }}>
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12, paddingBottom: 10, borderBottom: '0.5px solid rgba(255,255,255,0.1)' }}>
         <div>

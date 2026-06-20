@@ -279,7 +279,7 @@ export default function EdgeScreen({ onReplay }: Props) {
   const satDir = sat?.aggregateDirection
 
   return (
-    <div className="screen-light" style={{ padding: 18, maxWidth: 900, margin: '0 auto' }}>
+    <div className="screen-light" style={{ padding: 18, maxWidth: 480, margin: '0 auto' }}>
       {/* Header */}
       <div style={{ borderBottom: '0.5px solid var(--hairline)', paddingBottom: 14, marginBottom: 16 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
