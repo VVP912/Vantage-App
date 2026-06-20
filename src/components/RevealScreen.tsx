@@ -14,6 +14,7 @@ const POSITION_SIZE = 2000
 
 export default function RevealScreen({ result, onEdge, onReplay }: Props) {
   const [explanation, setExplanation] = useState('')
+  const [selectedStock, setSelectedStock] = useState<typeof STOCKS[number] | null>(null)
 
   const bearNames = STOCKS.filter((s) => s.altDataDir === 'bear')
     .map((s) => s.sym)
@@ -124,7 +125,7 @@ export default function RevealScreen({ result, onEdge, onReplay }: Props) {
 
       {/* Stock comparison table */}
       <div style={{ fontSize: 10, fontWeight: 500, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>
-        Stock-by-stock — you vs the hedge fund
+        Stock-by-stock — you vs the hedge fund <span style={{ textTransform: 'none', color: 'var(--text-tertiary)', fontWeight: 400 }}>· tap a row for detail</span>
       </div>
       <div style={{ marginBottom: 12, overflowX: 'auto' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 11, fontFamily: 'Courier New, monospace' }}>
@@ -137,7 +138,7 @@ export default function RevealScreen({ result, onEdge, onReplay }: Props) {
           </thead>
           <tbody>
             {stockRows.map(({ tk, userStockPnL, hedgeStockPnL, traded }) => (
-              <tr key={tk.sym}>
+              <tr key={tk.sym} onClick={() => setSelectedStock(tk)} style={{ cursor: 'pointer' }}>
                 <td style={{ padding: '7px 6px', borderBottom: '0.5px solid rgba(255,255,255,0.05)', color: 'var(--text-primary)', fontWeight: 500 }}>{tk.sym}</td>
                 <td style={{ padding: '7px 6px', borderBottom: '0.5px solid rgba(255,255,255,0.05)', color: 'var(--bull)', fontSize: 10 }}>Buy</td>
                 <td style={{ padding: '7px 6px', borderBottom: '0.5px solid rgba(255,255,255,0.05)', color: tk.altDataDir === 'bull' ? 'var(--bull)' : tk.altDataDir === 'bear' ? 'var(--bear)' : 'var(--phosphor)', fontSize: 10, textAlign: 'right' }}>
@@ -196,6 +197,71 @@ export default function RevealScreen({ result, onEdge, onReplay }: Props) {
       >
         Play again
       </button>
+
+      {/* Per-stock detail modal */}
+      {selectedStock && (() => {
+        const row = stockRows.find(r => r.tk.sym === selectedStock.sym)!
+        const trades = result.trades.filter(t => t.sym === selectedStock.sym)
+        const finalPrice = result.finalPrices[selectedStock.sym] || selectedStock.basePrice
+        return (
+          <div onClick={() => setSelectedStock(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20, zIndex: 50 }}>
+            <div onClick={e => e.stopPropagation()} style={{ background: 'var(--bg-panel, #111)', border: '0.5px solid rgba(255,255,255,0.15)', borderRadius: 12, padding: 18, maxWidth: 420, width: '100%', maxHeight: '80vh', overflowY: 'auto' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                <div style={{ fontSize: 18, fontWeight: 500, color: 'var(--text-primary)' }}>{selectedStock.sym}</div>
+                <button onClick={() => setSelectedStock(null)} style={{ background: 'none', border: 'none', color: 'var(--text-tertiary)', fontSize: 18, cursor: 'pointer', padding: 4 }}>✕</button>
+              </div>
+              <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginBottom: 14 }}>{selectedStock.sector} · analyst rated Buy</div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 14 }}>
+                <div style={{ background: 'rgba(255,255,255,0.04)', borderRadius: 8, padding: 10 }}>
+                  <div style={{ fontSize: 9, color: 'var(--text-tertiary)', textTransform: 'uppercase', marginBottom: 3 }}>Alt data said</div>
+                  <div style={{ fontSize: 14, fontWeight: 500, color: selectedStock.altDataDir === 'bull' ? 'var(--bull)' : selectedStock.altDataDir === 'bear' ? 'var(--bear)' : 'var(--phosphor)' }}>
+                    {selectedStock.altDataDir === 'bull' ? 'Bullish' : selectedStock.altDataDir === 'bear' ? 'Bearish' : 'Neutral'}
+                  </div>
+                </div>
+                <div style={{ background: 'rgba(255,255,255,0.04)', borderRadius: 8, padding: 10 }}>
+                  <div style={{ fontSize: 9, color: 'var(--text-tertiary)', textTransform: 'uppercase', marginBottom: 3 }}>Actual result</div>
+                  <div style={{ fontSize: 14, fontWeight: 500, color: selectedStock.result >= 0 ? 'var(--bull)' : 'var(--bear)' }}>
+                    {selectedStock.result >= 0 ? '+' : ''}{Math.round(selectedStock.result * 100)}%
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.7)', lineHeight: 1.6, marginBottom: 14, background: 'rgba(159,239,0,0.06)', border: '0.5px solid rgba(159,239,0,0.25)', borderRadius: 8, padding: 10 }}>
+                <span style={{ color: 'var(--phosphor)', fontWeight: 500 }}>{selectedStock.resultNote}</span> — {selectedStock.hedgeAction}
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 14 }}>
+                <div>
+                  <div style={{ fontSize: 9, color: 'var(--text-tertiary)', textTransform: 'uppercase', marginBottom: 3 }}>Your P&L</div>
+                  <div style={{ fontSize: 16, fontWeight: 500, color: row.traded ? (row.userStockPnL >= 0 ? 'var(--bull)' : 'var(--bear)') : 'var(--text-tertiary)' }}>
+                    {row.traded ? `${row.userStockPnL >= 0 ? '+' : ''}$${Math.round(Math.abs(row.userStockPnL))}` : 'No position'}
+                  </div>
+                </div>
+                <div>
+                  <div style={{ fontSize: 9, color: 'var(--text-tertiary)', textTransform: 'uppercase', marginBottom: 3 }}>Hedge fund P&L</div>
+                  <div style={{ fontSize: 16, fontWeight: 500, color: 'var(--bull)' }}>
+                    {row.hedgeStockPnL >= 0 ? '+' : ''}${Math.round(Math.abs(row.hedgeStockPnL))}
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ fontSize: 9, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>Your trades on {selectedStock.sym}</div>
+              {trades.length > 0 ? (
+                trades.map((t, i) => (
+                  <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, padding: '5px 0', borderBottom: i < trades.length - 1 ? '0.5px solid rgba(255,255,255,0.06)' : 'none' }}>
+                    <span style={{ color: t.side === 'buy' ? 'var(--bull)' : 'var(--bear)', fontWeight: 500, textTransform: 'uppercase' }}>{t.side}</span>
+                    <span style={{ color: 'var(--text-secondary)' }}>{t.qty} sh @ ${t.price.toFixed(2)}</span>
+                  </div>
+                ))
+              ) : (
+                <div style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>No trades placed.</div>
+              )}
+              <div style={{ fontSize: 10, color: 'var(--text-tertiary)', marginTop: 10 }}>Final price: ${finalPrice.toFixed(2)}</div>
+            </div>
+          </div>
+        )
+      })()}
     </div>
   )
 }

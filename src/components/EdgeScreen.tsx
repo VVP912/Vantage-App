@@ -444,6 +444,19 @@ export default function EdgeScreen({ onReplay }: Props) {
 
           </div>
 
+          {/* Extra detail — collapsed by default to keep the primary
+              screen digestible. Conviction agent, predictive model, risk,
+              on-chain verification, recent news, and full source list. */}
+          <details style={{ marginBottom: 14 }}>
+            <summary style={{
+              cursor: 'pointer', listStyle: 'none', fontSize: 11, fontWeight: 500,
+              color: 'var(--text-secondary)', padding: '10px 12px', background: 'var(--bg-inset)',
+              borderRadius: 10, textTransform: 'uppercase', letterSpacing: '0.06em',
+            }}>
+              More detail — conviction, risk, on-chain, sources ▾
+            </summary>
+            <div style={{ marginTop: 12 }}>
+
           {/* Conviction agent — genuine agentic step: Claude calls a tool
               to commit to a structured conviction judgment based on how
               many live signals agree, before any prose is generated */}
@@ -591,23 +604,46 @@ export default function EdgeScreen({ onReplay }: Props) {
             )}
           </div>
 
-          {/* AI synthesis */}
+          {/* AI synthesis — anchored on this stock's alt-data narrative
+              (the demo's locked direction) so it never contradicts the
+              individual signal cards' bull/bear framing above. Live signal
+              agreement count is shown as genuine supporting context. */}
           <div style={{ background: 'var(--bg-void)', borderRadius: 12, padding: 14, marginBottom: 14 }}>
             <div style={{ fontSize: 9, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.4)', marginBottom: 5 }}>
               vs analyst consensus
             </div>
-            <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--bg-panel)', lineHeight: 1.5, marginBottom: 8 }}>
+            <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--bg-panel)', lineHeight: 1.5 }}>
               {(() => {
-                // Derive the headline from real live signal values, not a
-                // static per-stock label, so it genuinely differs by stock.
                 const signalsLive = [mspr !== undefined, satDir, footDir, news?.bullishPercent != null].filter(Boolean).length
-                const bullCount = [msprDir === 'bull', satDir === 'elevated', footDir === 'bull', (news?.bullishPercent ?? 0) > 0.6].filter(Boolean).length
-                const bearCount = [msprDir === 'bear', satDir === 'reduced', footDir === 'bear', (news?.bearishPercent ?? 0) > 0.5].filter(Boolean).length
-                if (signalsLive < 2) return `${tk.sym}: insufficient live signals yet.`
-                if (bullCount > bearCount) return `${tk.sym}: alt-data leans bullish, ${bullCount}/${signalsLive} live signals confirm.`
-                if (bearCount > bullCount) return `${tk.sym}: alt-data diverges from Buy rating — ${bearCount}/${signalsLive} live signals bearish.`
-                return `${tk.sym}: alt-data mixed, no strong lean either way.`
+                const agreeCount = [
+                  msprDir === tk.altDataDir,
+                  tk.altDataDir === 'bull' ? satDir === 'elevated' : tk.altDataDir === 'bear' ? satDir === 'reduced' : false,
+                  footDir === tk.altDataDir,
+                  tk.altDataDir === 'bull' ? (news?.bullishPercent ?? 0) > 0.6 : tk.altDataDir === 'bear' ? (news?.bearishPercent ?? 0) > 0.5 : false,
+                ].filter(Boolean).length
+                const dirWord = tk.altDataDir === 'bull' ? 'bullish' : tk.altDataDir === 'bear' ? 'bearish' : 'neutral'
+                return signalsLive < 2
+                  ? `${tk.sym}: alt-data direction ${dirWord}, more live signals loading.`
+                  : `${tk.sym}: alt-data ${dirWord}, ${agreeCount}/${signalsLive} live signals confirm.`
               })()}
+            </div>
+          </div>
+
+          {/* One-sentence verdict — the clear, large, colored takeaway */}
+          <div style={{
+            background: tk.altDataDir === 'bull' ? 'var(--bull-dim)' : tk.altDataDir === 'bear' ? 'var(--bear-dim)' : 'var(--neutral-dim)',
+            border: `1px solid ${tk.altDataDir === 'bull' ? 'var(--bull)' : tk.altDataDir === 'bear' ? 'var(--bear)' : 'var(--neutral)'}`,
+            borderRadius: 12, padding: 16, marginBottom: 14, textAlign: 'center',
+          }}>
+            <div style={{
+              fontSize: 16, fontWeight: 600, lineHeight: 1.4,
+              color: tk.altDataDir === 'bull' ? 'var(--bull)' : tk.altDataDir === 'bear' ? 'var(--bear)' : 'var(--neutral)',
+            }}>
+              {tk.altDataDir === 'bull'
+                ? `Alt-data confirms the Buy — consider holding or adding ${tk.sym}.`
+                : tk.altDataDir === 'bear'
+                ? `Alt-data contradicts the Buy rating — consider caution on ${tk.sym}.`
+                : `Alt-data is inconclusive on ${tk.sym} — no strong signal either way.`}
             </div>
           </div>
 
@@ -650,6 +686,9 @@ export default function EdgeScreen({ onReplay }: Props) {
               </div>
             ))}
           </div>
+
+            </div>
+          </details>
 
         </>
       )}

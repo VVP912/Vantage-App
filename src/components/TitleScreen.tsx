@@ -69,7 +69,7 @@ export default function TitleScreen({ onStart }: Props) {
       </div>
 
       <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 12, letterSpacing: '0.02em' }}>
-        Six stocks. All analyst-rated Buy. 90 seconds to trade.
+        Six stocks. All analyst-rated Buy. 60 seconds to trade.
       </p>
 
       <p

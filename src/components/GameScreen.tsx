@@ -9,7 +9,7 @@ interface Props {
 }
 
 const TOTAL = 10000
-const GAME_SECS = 90
+const GAME_SECS = 60
 const POSITION_SIZE = 2000 // hedge fund position per stock
 
 const HEDGE_MSGS = [
