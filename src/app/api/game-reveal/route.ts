@@ -9,19 +9,16 @@ export async function POST(req: NextRequest) {
 
   const stream = await anthropic.messages.stream({
     model: 'claude-sonnet-4-6',
-    max_tokens: 280,
+    max_tokens: 140,
     messages: [{
       role: 'user',
-      content: `2 short punchy paragraphs, plain text, no headers, no bullets.
+      content: `ONE short punchy paragraph, max 60 words, plain text, no headers, no bullets.
 
 A retail investor traded 6 stocks pre-earnings. All were analyst-rated Buy. Their P&L: ${yourPnL >= 0 ? '+' : ''}$${Math.round(yourPnL)}. The hedge fund made +$${Math.round(hedgePnL)} on the same stocks. Data advantage: $${Math.round(dataAdvantage)}.
 
-The key: ${bearNames} had alternative data pointing to misses (satellite imagery, credit card spend, job postings all negative) despite Buy ratings. ${bullNames} had data confirming the bull case.
+The key: ${bearNames} had alternative data pointing to misses despite Buy ratings. ${bullNames} had data confirming the bull case.
 
-Para 1: Why equal Buy ratings on all 6 stocks is the trap — and how alternative data reveals which Buy ratings are wrong weeks before earnings. Be specific about the data types.
-Para 2: The hedge fund made $${Math.round(dataAdvantage)} more than the retail investor on identical stocks with identical public information. The only difference was data access. This happens every earnings season. End with what equal access to this data would mean for market fairness.
-
-Direct, outraged on behalf of retail. No disclaimers.`
+State why equal Buy ratings hide the real signal, and that the $${Math.round(dataAdvantage)} gap came from data access alone. Direct, outraged on behalf of retail. No disclaimers.`
     }]
   })
 
