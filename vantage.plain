@@ -50,6 +50,12 @@ import:
 
 - :ConvictionResult: is the structured output of :ConvictionAgent:, sent to the client as the first server-sent event in the :EdgeScreen: analysis stream, before the streamed prose synthesis begins, so that a conviction badge can render ahead of the full written analysis.
 
+- :PredictiveModel: is a deterministic, rule-based scoring function, not an LLM call, that normalises each of the seven :SignalSources: values to a range of -1 to +1, multiplies each by a fixed, disclosed weight, and sums the result into a single composite score also ranging -1 to +1. The seven weights sum to 1.0 and are assigned by data-quality rationale rather than backtested optimisation: satellite imagery and foot traffic receive the highest weights as the closest free proxies to institutional-grade alternative data, and news sentiment receives the lowest weight as the most commoditised, already-priced-in signal. :PredictiveModel: must classify its own confidence as "insufficient_data" whenever fewer than three of the seven signals returned live data, mirroring :ConvictionAgent:'s own rule, and must surface an explicit overfitting caveat explaining why no machine-learning model trained on historical outcomes is used given the small demo dataset available.
+
+- :RiskAssessment: is a function that converts a :PredictiveModel: result into a bounded position-sizing recommendation. :RiskAssessment: should never recommend a position size above a fixed hard cap regardless of how strong the composite score is, should recommend "no_position" whenever the signals that meaningfully contributed to the composite score meaningfully disagree with each other (a circuit-breaker for conflicting data), and should recommend "insufficient_data" with zero position size whenever :PredictiveModel: itself reports insufficient data.
+
+- :OnChainPredictionLog: is a Solidity smart contract, :VantagePredictionLog:, deployed to the Polygon Amoy testnet (chain id 80002), that records each :ConvictionResult: as an on-chain transaction containing the stock symbol, a keccak256 hash of the raw signal values (not the raw values themselves, to avoid publishing the underlying data while still proving the record cannot be altered after the fact), the conviction level, the count of agreeing and total live signals, and a block timestamp. :OnChainPredictionLog: exposes a function to later mark a prediction as resolved with a correct/incorrect outcome, and a function to read aggregate accuracy statistics across all resolved predictions. The purpose of :OnChainPredictionLog: is to let any user independently verify, via a public block explorer, that a conviction call was made before the underlying event resolved and was not fabricated or altered after the fact.
+
 ***implementation reqs***
 
 - :MainExecutableFile: of :App: should be the Next.js App Router entry at "src/app/page.tsx".
@@ -62,6 +68,10 @@ import:
 - If any individual signal in :SignalSources: is unavailable due to a missing API key or failed request, :EdgeScreen: should display a clear "setup needed" state for that signal rather than blocking the rest of the screen.
 - :ConvictionAgent: should use Anthropic's forced tool-choice mode so the model cannot return free text instead of a structured :ConvictionResult:, and its call should run independently of and prior to the streamed prose synthesis, not be inferred after the fact from the synthesis text.
 - If :ConvictionAgent: fails or times out, :EdgeScreen: should continue to render the streamed prose synthesis without a conviction badge rather than blocking the rest of the analysis.
+- :PredictiveModel: should run as a pure deterministic function with no dependency on :ReasoningService:, so its output is reproducible given the same signal inputs.
+- The signal weights used by :PredictiveModel: should be defined as a single exported constant with each weight's rationale documented alongside it, so the methodology is visible in source rather than buried in a prompt.
+- If :OnChainPredictionLog:'s contract address or signing wallet are not configured via environment variables, the on-chain logging API route should return a clear "not configured" response rather than failing the request, and :EdgeScreen: should not block on-chain logging being unavailable.
+- The signing wallet's private key used to call :OnChainPredictionLog: should be read only from a server-side environment variable, never exposed to the client or committed to source control.
 
 ***test reqs***
 
@@ -70,6 +80,8 @@ import:
 - :GameResult:'s hedge fund profit-or-loss calculation should be tested to confirm it is strictly positive for every :Stock: with alternative-data direction "bull" or "bear", and zero for "neut".
 - Each API route backing :SignalSources: should be tested to confirm it returns a graceful fallback response, not a 500 error, when its required API key is absent.
 - :ConvictionAgent: should be tested to confirm it returns "insufficient_data" as the conviction level whenever fewer than three signals are live, even when the available signals strongly agree.
+- :PredictiveModel: should be tested to confirm its seven signal weights sum to 1.0, and that its composite score remains within the range -1 to +1 for any combination of valid signal inputs.
+- :RiskAssessment: should be tested to confirm it never returns a position size above the fixed hard cap regardless of how extreme the composite score is, and that it returns "no_position" when meaningfully contributing signals are evenly split between bullish and bearish.
 
 ***functional specs***
 
@@ -125,5 +137,24 @@ import:
 
   ***acceptance tests***
   - The synthesis should reference at least the satellite and foot traffic signals by name when both are available.
+
+- Run :PredictiveModel: against the seven live signals for the selected :Stock: independently of :ConvictionAgent:, and display the composite score, predicted direction, confidence band, and a per-signal breakdown showing each signal's weight and contribution.
+
+  ***acceptance tests***
+  - The displayed signal weights should sum to 1.0.
+  - The overfitting caveat text should be visible whenever fewer than three signals are live.
+
+- Run :RiskAssessment: against the :PredictiveModel: result and display the recommended action, the maximum position size as a percentage, and any warnings, including an explicit statement of the fixed hard cap.
+
+  ***acceptance tests***
+  - The maximum position size displayed should never exceed the fixed hard cap regardless of the composite score's magnitude.
+  - When :RiskAssessment: recommends "no_position" or "insufficient_data", the maximum position size displayed should be 0%.
+
+- Allow the user to log the current :ConvictionResult: for the selected :Stock: to :OnChainPredictionLog: via a button on :EdgeScreen:, and display the resulting transaction hash and a link to view it on a public block explorer once logged.
+
+  ***acceptance tests***
+  - The on-chain logging button should be disabled until a :ConvictionResult: is available for the selected :Stock:.
+  - If :OnChainPredictionLog: is not configured with a contract address and signing wallet, :EdgeScreen: should display a clear setup message instead of a broken button.
+  - On successful logging, :EdgeScreen: should display a working link to the transaction on a public block explorer.
 
 - Display a $29-per-month subscription pricing strip at the bottom of :EdgeScreen:.

@@ -25,6 +25,37 @@ interface ConvictionAssessment {
   reasoning: string
 }
 
+interface PredictionData {
+  prediction: {
+    compositeScore: number
+    predictedDirection: string
+    confidenceBand: string
+    liveSignalCount: number
+    signalBreakdown: Array<{ label: string; rawValue: unknown; normalisedScore: number; weight: number; contribution: number }>
+    overfittingCaveat: string
+  }
+  risk: {
+    recommendedAction: string
+    maxPositionSizePercent: number
+    rationale: string
+    warnings: string[]
+  }
+  methodology: {
+    weights: Array<{ key: string; label: string; weight: number; rationale: string }>
+    note: string
+  }
+}
+
+interface OnchainLogResult {
+  logged: boolean
+  txHash?: string
+  blockNumber?: number
+  explorerUrl?: string
+  signalHash?: string
+  network?: string
+  message?: string
+}
+
 const SOURCE_COLORS = {
   free: '#3B6D11',
   paid: '#854F0B',
@@ -37,6 +68,9 @@ export default function EdgeScreen({ onReplay }: Props) {
   const [analysisLoading, setAnalysisLoading] = useState(false)
   const [conviction, setConviction] = useState<ConvictionAssessment | null>(null)
   const [convictionLoading, setConvictionLoading] = useState(false)
+  const [prediction, setPrediction] = useState<PredictionData | null>(null)
+  const [onchainResult, setOnchainResult] = useState<OnchainLogResult | null>(null)
+  const [onchainLoading, setOnchainLoading] = useState(false)
 
   const tk = STOCKS[selIdx]
 
@@ -50,6 +84,9 @@ export default function EdgeScreen({ onReplay }: Props) {
     setSignals(prev => ({ ...prev, [sym]: { insiderData: null, redditData: null, newsData: null, quoteData: null, footTrafficData: null, satelliteData: null, loading: true } }))
     setAnalysis('')
     setAnalysisLoading(false)
+    setPrediction(null)
+    setOnchainResult(null)
+    setOnchainLoading(false)
 
     const fetchAll = async () => {
       const [insiderRes, redditRes, newsRes, quoteRes, footRes, satRes] = await Promise.allSettled([
@@ -73,11 +110,55 @@ export default function EdgeScreen({ onReplay }: Props) {
 
       setSignals(prev => ({ ...prev, [sym]: data }))
       runAnalysis(sym, data)
+
+      // Run the predictive model independently of the streamed
+      // synthesis — quantitative, deterministic, not LLM-generated.
+      try {
+        const predRes = await fetch('/api/predict', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            insiderData: data.insiderData,
+            redditData: data.redditData,
+            newsData: data.newsData,
+            quoteData: data.quoteData,
+            footTrafficData: data.footTrafficData,
+            satelliteData: data.satelliteData,
+          }),
+        })
+        const predData = await predRes.json()
+        setPrediction(predData)
+      } catch {
+        setPrediction(null)
+      }
     }
 
     fetchAll()
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selIdx])
+
+  const logToChain = async () => {
+    if (!conviction) return
+    setOnchainLoading(true)
+    try {
+      const res = await fetch('/api/onchain-log', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          symbol: tk.sym,
+          signalValues: signals[tk.sym],
+          convictionLevel: conviction.convictionLevel,
+          agreeingSignals: conviction.agreeingSignalCount,
+          totalLiveSignals: conviction.totalLiveSignals,
+        }),
+      })
+      const result = await res.json()
+      setOnchainResult(result)
+    } catch {
+      setOnchainResult({ logged: false, message: 'Request failed.' })
+    } finally {
+      setOnchainLoading(false)
+    }
 
   const runAnalysis = async (sym: string, data?: AllSignalData) => {
     const d = data || signals[sym]
@@ -402,6 +483,122 @@ export default function EdgeScreen({ onReplay }: Props) {
               </>
             ) : (
               <div style={{ fontSize: 12, color: '#999' }}>Conviction assessment unavailable this request.</div>
+            )}
+          </div>
+
+          {/* Predictive scoring model — deterministic, weighted, fully
+              auditable. Not an LLM call: a rule-based model with fixed,
+              disclosed weights. This is the quantitative backbone the
+              conviction agent's qualitative judgment sits alongside. */}
+          <div style={{ background: '#fff', border: '0.5px solid #e5e5e5', borderRadius: 12, padding: 12, marginBottom: 14 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+              <div style={{ fontSize: 10, fontWeight: 500, color: '#999', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                Predictive model
+              </div>
+              <span style={{ fontSize: 9, padding: '2px 7px', borderRadius: 20, background: '#E6F1FB', color: '#0C447C', fontWeight: 500 }}>
+                Rule-based · weighted
+              </span>
+            </div>
+            {!prediction ? (
+              <div style={{ fontSize: 12, color: '#999' }}>Computing weighted composite score...</div>
+            ) : (
+              <>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginBottom: 8 }}>
+                  <span style={{ fontSize: 22, fontWeight: 500, fontFamily: 'Courier New, monospace', color: prediction.prediction.predictedDirection === 'bullish' ? '#3B6D11' : prediction.prediction.predictedDirection === 'bearish' ? '#A32D2D' : '#666' }}>
+                    {prediction.prediction.compositeScore > 0 ? '+' : ''}{prediction.prediction.compositeScore.toFixed(3)}
+                  </span>
+                  <span style={{ fontSize: 12, color: '#666', textTransform: 'capitalize' }}>
+                    {prediction.prediction.predictedDirection} · {prediction.prediction.confidenceBand.replace('_', ' ')} confidence
+                  </span>
+                </div>
+                <div style={{ marginBottom: 8 }}>
+                  {prediction.prediction.signalBreakdown.map((s, i) => (
+                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                      <span style={{ fontSize: 10, color: '#666', width: 130, flexShrink: 0 }}>{s.label}</span>
+                      <div style={{ flex: 1, height: 6, background: '#f0f0f0', borderRadius: 3, position: 'relative', overflow: 'hidden' }}>
+                        <div style={{
+                          position: 'absolute', top: 0, bottom: 0,
+                          left: s.contribution >= 0 ? '50%' : `${50 + s.contribution * 200}%`,
+                          width: `${Math.abs(s.contribution) * 200}%`,
+                          background: s.contribution >= 0 ? '#639922' : '#E24B4A',
+                        }} />
+                        <div style={{ position: 'absolute', left: '50%', top: 0, bottom: 0, width: 1, background: '#ccc' }} />
+                      </div>
+                      <span style={{ fontSize: 9, color: '#999', width: 50, textAlign: 'right', flexShrink: 0 }}>w={s.weight}</span>
+                    </div>
+                  ))}
+                </div>
+                <div style={{ fontSize: 9, color: '#bbb', lineHeight: 1.5, paddingTop: 6, borderTop: '0.5px solid #eee' }}>
+                  {prediction.prediction.overfittingCaveat}
+                </div>
+              </>
+            )}
+          </div>
+
+          {/* Risk management — explicit position sizing, hard caps,
+              and circuit-breaker logic for conflicting signals. */}
+          {prediction && (
+            <div style={{ background: '#fff', border: '0.5px solid #e5e5e5', borderRadius: 12, padding: 12, marginBottom: 14 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                <div style={{ fontSize: 10, fontWeight: 500, color: '#999', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                  Risk assessment
+                </div>
+                <span style={{
+                  fontSize: 9, padding: '2px 7px', borderRadius: 20, fontWeight: 500,
+                  background: prediction.risk.recommendedAction === 'no_position' || prediction.risk.recommendedAction === 'insufficient_data' ? '#FAEEDA' : '#EAF3DE',
+                  color: prediction.risk.recommendedAction === 'no_position' || prediction.risk.recommendedAction === 'insufficient_data' ? '#854F0B' : '#3B6D11',
+                }}>
+                  {prediction.risk.recommendedAction.replace(/_/g, ' ')}
+                </span>
+              </div>
+              <div style={{ fontSize: 20, fontWeight: 500, fontFamily: 'Courier New, monospace', color: '#111', marginBottom: 6 }}>
+                Max {prediction.risk.maxPositionSizePercent}% position
+              </div>
+              <div style={{ fontSize: 11, color: '#666', lineHeight: 1.5, marginBottom: 8 }}>{prediction.risk.rationale}</div>
+              {prediction.risk.warnings.map((w, i) => (
+                <div key={i} style={{ fontSize: 10, color: '#A32D2D', lineHeight: 1.5, marginBottom: 4, paddingLeft: 10, borderLeft: '2px solid #F09595' }}>{w}</div>
+              ))}
+            </div>
+          )}
+
+          {/* On-chain verification — logs the conviction call to Polygon
+              Amoy testnet before the outcome is known, so the prediction
+              is timestamped and tamper-proof. This is the verifiability
+              layer: anyone can independently check the chain. */}
+          <div style={{ background: '#fff', border: '0.5px solid #e5e5e5', borderRadius: 12, padding: 12, marginBottom: 14 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+              <div style={{ fontSize: 10, fontWeight: 500, color: '#999', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                On-chain verification
+              </div>
+              <span style={{ fontSize: 9, padding: '2px 7px', borderRadius: 20, background: '#EEEDFE', color: '#534AB7', fontWeight: 500 }}>
+                Polygon Amoy testnet
+              </span>
+            </div>
+            {onchainResult?.logged ? (
+              <>
+                <div style={{ fontSize: 12, color: '#3B6D11', fontWeight: 500, marginBottom: 6 }}>Logged on-chain</div>
+                <div style={{ fontSize: 10, color: '#666', wordBreak: 'break-all', marginBottom: 6 }}>Tx: {onchainResult.txHash}</div>
+                {onchainResult.explorerUrl && (
+                  <a href={onchainResult.explorerUrl} target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, color: '#378ADD' }}>
+                    View on PolygonScan ↗
+                  </a>
+                )}
+              </>
+            ) : onchainResult && !onchainResult.logged ? (
+              <div style={{ fontSize: 11, color: '#999', lineHeight: 1.5 }}>{onchainResult.message}</div>
+            ) : (
+              <>
+                <div style={{ fontSize: 11, color: '#666', lineHeight: 1.5, marginBottom: 8 }}>
+                  Record this conviction call on Polygon Amoy testnet before the earnings outcome is known — a tamper-proof, timestamped, publicly auditable prediction. Raw signal values are hashed, not published, so the record proves prior commitment without exposing data.
+                </div>
+                <button
+                  onClick={logToChain}
+                  disabled={!conviction || onchainLoading}
+                  style={{ padding: '8px 14px', background: conviction ? '#0d0d1a' : '#ccc', color: '#fff', border: 'none', borderRadius: 6, fontSize: 11, fontWeight: 500, cursor: conviction ? 'pointer' : 'not-allowed', fontFamily: 'Courier New, monospace' }}
+                >
+                  {onchainLoading ? 'Logging...' : 'Log prediction on-chain'}
+                </button>
+              </>
             )}
           </div>
 

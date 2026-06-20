@@ -16,6 +16,7 @@
     "recharts": "^2.12.7",
     "@christophern/populartimesjs": "^1.0.0",
     "@anthropic-ai/sdk": "^0.27.0",
+    "ethers": "^6.13.0",
     "ai": "^3.2.22",
     "@ai-sdk/anthropic": "^0.0.43"
   },
