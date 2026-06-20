@@ -103,13 +103,15 @@ export async function POST(req: NextRequest) {
   // It decides, signal by signal, how many genuinely agree and how
   // confident that makes it — this judgment is not computed by a
   // hardcoded threshold in the frontend, it is the model's own call.
-  let conviction: {
+  interface ConvictionAssessment {
     convictionLevel: string
     agreeingSignalCount: number
     totalLiveSignals: number
     primarySignals: string[]
     reasoning: string
-  } | null = null
+  }
+
+  let conviction: ConvictionAssessment | null = null
 
   try {
     const convictionResponse = await anthropic.messages.create({
@@ -129,7 +131,7 @@ ${signalsBlock}`
       (block): block is Anthropic.ToolUseBlock => block.type === 'tool_use'
     )
     if (toolUse) {
-      conviction = toolUse.input as typeof conviction
+      conviction = toolUse.input as ConvictionAssessment
     }
   } catch {
     conviction = null
