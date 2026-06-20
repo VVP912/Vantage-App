@@ -3,7 +3,13 @@ import { STOCKS } from '@/lib/stocks'
 
 export async function GET(req: NextRequest) {
   try {
-    const yahooFinance = (await import('yahoo-finance2')).default
+    // yahoo-finance2 v2's default export is a class that must be
+    // instantiated with `new` before use — this is the actual fix;
+    // the bare default-export-as-singleton pattern (v1-style) is what
+    // was breaking TypeScript's overload resolution on every call,
+    // regardless of for-loop vs .map() or any other call-site shape.
+    const YahooFinance = (await import('yahoo-finance2')).default
+    const yahooFinance = new YahooFinance()
     const symbols = STOCKS.map((s) => s.sym)
 
     const results = await Promise.allSettled(

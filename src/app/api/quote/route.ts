@@ -9,8 +9,12 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    // Dynamic import to avoid SSR issues
-    const yahooFinance = (await import('yahoo-finance2')).default
+    // yahoo-finance2 v2's default export is a class that must be
+    // instantiated with `new` before use — using the bare default
+    // export directly (the old v1-style singleton pattern) breaks
+    // TypeScript's method `this`-context resolution for every call.
+    const YahooFinance = (await import('yahoo-finance2')).default
+    const yahooFinance = new YahooFinance()
     const quote = await yahooFinance.quote(symbol)
 
     return NextResponse.json({

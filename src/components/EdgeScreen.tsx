@@ -340,7 +340,7 @@ export default function EdgeScreen({ onReplay }: Props) {
                 {badge(sat?.available ? (satDir === 'elevated' ? 'Active' : satDir === 'reduced' ? 'Quiet' : 'Stable') : 'Setup needed', satDir === 'elevated' ? 'var(--bull)' : satDir === 'reduced' ? 'var(--bear)' : 'var(--neutral)', satDir === 'elevated' ? 'var(--bull-dim)' : satDir === 'reduced' ? 'var(--bear-dim)' : 'var(--neutral-dim)')}
               </div>
               <div style={{ fontSize: 20, fontWeight: 500, color: 'var(--text-primary)', fontFamily: 'Courier New, monospace' }}>
-                {sat?.available ? `${sat.aggregateActivityScore > 0 ? '+' : ''}${sat.aggregateActivityScore?.toFixed(1)} score` : 'Needs setup'}
+                {sat?.available ? `${(sat.aggregateActivityScore ?? 0) > 0 ? '+' : ''}${sat.aggregateActivityScore?.toFixed(1)} score` : 'Needs setup'}
               </div>
               <div style={{ fontSize: 10, color: 'var(--text-secondary)', marginTop: 3, lineHeight: 1.4 }}>
                 {sat?.available ? sat.aggregateInterpretation?.substring(0, 100) + '...' : 'Add SENTINEL_HUB credentials to enable ESA Sentinel-2 NDVI/NDBI analysis'}
@@ -456,9 +456,9 @@ export default function EdgeScreen({ onReplay }: Props) {
                 <div key={i} style={{ paddingBottom: 8, marginBottom: 8, borderBottom: i < sat.facilities!.length - 1 ? '0.5px solid var(--hairline)' : 'none' }}>
                   <div style={{ fontSize: 11, fontWeight: 500, color: 'var(--text-primary)' }}>{f.name}</div>
                   <div style={{ fontSize: 10, color: f.satelliteData?.direction === 'elevated' ? 'var(--bull)' : f.satelliteData?.direction === 'reduced' ? 'var(--bear)' : 'var(--text-secondary)', marginTop: 2 }}>
-                    Activity {f.satelliteData?.direction} · score {f.satelliteData?.activityScore > 0 ? '+' : ''}{f.satelliteData?.activityScore?.toFixed(1)}
+                    Activity {f.satelliteData?.direction} · score {(f.satelliteData?.activityScore ?? 0) > 0 ? '+' : ''}{f.satelliteData?.activityScore?.toFixed(1)}
                   </div>
-                  <div style={{ fontSize: 10, color: 'var(--text-secondary)', marginTop: 2, lineHeight: 1.4 }}>{f.interpretation}</div>
+                  <div style={{ fontSize: 10, color: 'var(--text-secondary)', marginTop: 2, lineHeight: 1.4 }}>{f.satelliteData?.interpretation}</div>
                 </div>
               ))}
             </div>
