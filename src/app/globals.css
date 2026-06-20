@@ -2,17 +2,68 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ============================================================
+   VANTAGE — "Dead Drop" design system
+   An intelligence-terminal aesthetic: deep space backgrounds,
+   phosphor-green readouts (CRT trading terminal lineage), faint
+   scan-line grid texture evoking both satellite imagery and old
+   Bloomberg terminals. One unified theme across every screen —
+   no separate "light mode" card style bolted on.
+   ============================================================ */
+
 :root {
-  --ink: #0d0d1a;
-  --ink2: #16213e;
-  --accent: #e94560;
-  --teal: #4ecca3;
-  --gold: #f5a623;
-  --purple: #7F77DD;
-  --dim: #54577a;
-  --soft: #a8a9b4;
-  --card: rgba(255,255,255,0.04);
-  --border: rgba(255,255,255,0.10);
+  /* Surfaces */
+  --bg-void: #080b10;        /* deepest background */
+  --bg-panel: #131a26;       /* card / panel surface */
+  --bg-panel-raised: #1a2230; /* slightly raised panel (hover, active) */
+  --bg-inset: #060911;       /* recessed surface (log panels, inputs) */
+
+  /* Phosphor signature accent — the one color this product owns */
+  --phosphor: #9FEF00;
+  --phosphor-dim: rgba(159, 239, 0, 0.5);
+  --phosphor-faint: rgba(159, 239, 0, 0.12);
+  --phosphor-glow: rgba(159, 239, 0, 0.25);
+
+  /* Directional signal colors — distinct from the phosphor accent
+     so "this is the brand" and "this is bullish/bearish" never compete */
+  --bull: #3DDC84;
+  --bull-dim: rgba(61, 220, 132, 0.14);
+  --bear: #FF4747;
+  --bear-dim: rgba(255, 71, 71, 0.14);
+  --neutral: #E8A33D;
+  --neutral-dim: rgba(232, 163, 61, 0.14);
+
+  /* Macro / crypto category — visually distinct cold accent so the
+     Bybit signal reads as "a different category of data" at a glance */
+  --macro: #5EC8FF;
+  --macro-dim: rgba(94, 200, 255, 0.14);
+
+  /* Agentic / AI category accent — distinguishes "model decided this"
+     from raw signal readouts */
+  --agentic: #C792FF;
+  --agentic-dim: rgba(199, 146, 255, 0.14);
+
+  /* Text */
+  --text-primary: #EAF2DC;
+  --text-secondary: #8A9485;
+  --text-tertiary: #54604F;
+
+  /* Borders / structure */
+  --hairline: rgba(159, 239, 0, 0.10);
+  --hairline-strong: rgba(159, 239, 0, 0.22);
+
+  /* Legacy aliases kept so existing inline styles referencing old
+     tokens still resolve sensibly during the visual migration */
+  --ink: var(--bg-void);
+  --ink2: var(--bg-panel);
+  --accent: var(--bear);
+  --teal: var(--bull);
+  --gold: var(--neutral);
+  --purple: var(--agentic);
+  --dim: var(--text-tertiary);
+  --soft: var(--text-secondary);
+  --card: var(--bg-panel);
+  --border: var(--hairline);
 }
 
 * {
@@ -21,30 +72,44 @@
   padding: 0;
 }
 
+html, body {
+  background: var(--bg-void);
+}
+
 body {
-  font-family: 'Courier New', monospace;
+  font-family: 'IBM Plex Mono', 'Courier New', monospace;
+  color: var(--text-primary);
 }
 
 .font-mono {
-  font-family: 'Courier New', monospace;
+  font-family: 'IBM Plex Mono', 'Courier New', monospace;
 }
 
-/* Dark screen */
-.screen-dark {
-  background: #0d0d1a;
-  min-height: 100vh;
-}
-
-/* Light screen */
+/* Both screen contexts now share the same deep-space surface and
+   the same faint phosphor scan-line texture, so the trading game
+   and the product dashboard read as one continuous product rather
+   than two different apps stapled together. */
+.screen-dark,
 .screen-light {
-  background: #ffffff;
+  background:
+    repeating-linear-gradient(
+      0deg,
+      rgba(159, 239, 0, 0.018) 0px,
+      rgba(159, 239, 0, 0.018) 1px,
+      transparent 1px,
+      transparent 3px
+    ),
+    radial-gradient(ellipse 1200px 600px at 50% -10%, rgba(159, 239, 0, 0.05), transparent),
+    var(--bg-void);
   min-height: 100vh;
+  color: var(--text-primary);
 }
 
-/* Scrollbar */
-::-webkit-scrollbar { width: 4px; }
-::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); }
-::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 2px; }
+/* Scrollbar — phosphor-tinted to match the rest of the chrome */
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: var(--bg-inset); }
+::-webkit-scrollbar-thumb { background: var(--phosphor-faint); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--phosphor-dim); }
 
 /* Streaming text animation */
 @keyframes fadeIn {
@@ -55,7 +120,25 @@ body {
   animation: fadeIn 0.3s ease;
 }
 
+/* Phosphor pulse — used sparingly for live/active data indicators,
+   the one signature motion element in the design (a slow CRT-like
+   breathing glow, not a generic spinner) */
+@keyframes phosphorPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
+}
+.pulse-live {
+  animation: phosphorPulse 2.2s ease-in-out infinite;
+}
+
 /* Mini chart bars */
-.mini-bar-bull { background: #639922; opacity: 0.7; }
-.mini-bar-bear { background: #E24B4A; opacity: 0.7; }
-.mini-bar-neut { background: #BA7517; opacity: 0.7; }
+.mini-bar-bull { background: var(--bull); opacity: 0.75; }
+.mini-bar-bear { background: var(--bear); opacity: 0.75; }
+.mini-bar-neut { background: var(--neutral); opacity: 0.75; }
+
+/* Reduced motion respected throughout */
+@media (prefers-reduced-motion: reduce) {
+  .fade-in, .pulse-live {
+    animation: none !important;
+  }
+}

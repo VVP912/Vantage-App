@@ -254,8 +254,8 @@ export default function GameScreen({ onReveal }: Props) {
     return (
       <div className="screen-dark" style={{ padding: 16, maxWidth: 480, margin: '0 auto', minHeight: 500, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: 13, color: '#a8a9b4', marginBottom: 8 }}>Loading live market data...</div>
-          <div style={{ fontSize: 11, color: '#54577a' }}>Fetching real prices from Yahoo Finance</div>
+          <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 8 }}>Loading live market data...</div>
+          <div style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>Fetching real prices from Yahoo Finance</div>
         </div>
       </div>
     )
@@ -266,13 +266,13 @@ export default function GameScreen({ onReveal }: Props) {
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12, paddingBottom: 10, borderBottom: '0.5px solid rgba(255,255,255,0.1)' }}>
         <div>
-          <div style={{ fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#a8a9b4' }}>Earnings season</div>
-          <div style={{ fontSize: 10, color: '#e94560', marginTop: 1 }}>
+          <div style={{ fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-secondary)' }}>Earnings season</div>
+          <div style={{ fontSize: 10, color: 'var(--bear)', marginTop: 1 }}>
             All 6 rated Buy · {livePriceCount > 0 ? `${livePriceCount}/6 live prices` : 'reference prices'}
           </div>
         </div>
-        <div style={{ fontSize: 20, fontWeight: 500, color: timeLeft <= 15 ? '#e94560' : '#fff' }}>{mm}:{ss}</div>
-        <div style={{ fontSize: 11, color: '#a8a9b4', background: 'rgba(255,255,255,0.05)', padding: '4px 10px', borderRadius: 20, border: '0.5px solid rgba(255,255,255,0.1)' }}>
+        <div style={{ fontSize: 20, fontWeight: 500, color: timeLeft <= 15 ? 'var(--bear)' : 'var(--text-primary)' }}>{mm}:{ss}</div>
+        <div style={{ fontSize: 11, color: 'var(--text-secondary)', background: 'rgba(255,255,255,0.05)', padding: '4px 10px', borderRadius: 20, border: '0.5px solid rgba(255,255,255,0.1)' }}>
           ${Math.round(cash).toLocaleString()}
         </div>
       </div>
@@ -284,16 +284,16 @@ export default function GameScreen({ onReveal }: Props) {
             key={p.sym}
             onClick={() => setSelIdx(i)}
             style={{
-              background: i === selIdx ? '#f5a623' : '#1c1c30',
-              border: i === selIdx ? '1px solid #f5a623' : '0.5px solid rgba(255,255,255,0.12)',
+              background: i === selIdx ? 'var(--phosphor)' : 'var(--bg-panel-raised)',
+              border: i === selIdx ? '1px solid var(--phosphor)' : '0.5px solid rgba(255,255,255,0.12)',
               borderRadius: 6, padding: 8, cursor: 'pointer', textAlign: 'center'
             }}
           >
-            <div style={{ fontSize: 12, fontWeight: 500, color: i === selIdx ? '#0d0d1a' : '#fff' }}>{p.sym}</div>
-            <div style={{ fontSize: 11, color: i === selIdx ? '#0d0d1a' : (p.chg >= 0 ? '#4ecca3' : '#e94560'), marginTop: 2 }}>
+            <div style={{ fontSize: 12, fontWeight: 500, color: i === selIdx ? 'var(--bg-void)' : 'var(--text-primary)' }}>{p.sym}</div>
+            <div style={{ fontSize: 11, color: i === selIdx ? 'var(--bg-void)' : (p.chg >= 0 ? 'var(--bull)' : 'var(--bear)'), marginTop: 2 }}>
               ${p.cur.toFixed(0)}
             </div>
-            <div style={{ fontSize: 10, color: i === selIdx ? 'rgba(13,13,26,0.7)' : (p.chg >= 0 ? '#4ecca3' : '#e94560'), marginTop: 1 }}>
+            <div style={{ fontSize: 10, color: i === selIdx ? 'rgba(8,11,16,0.7)' : (p.chg >= 0 ? 'var(--bull)' : 'var(--bear)'), marginTop: 1 }}>
               {p.chg >= 0 ? '+' : ''}{p.chg.toFixed(1)}%
             </div>
           </button>
@@ -301,33 +301,33 @@ export default function GameScreen({ onReveal }: Props) {
       </div>
 
       {/* Selected stock info */}
-      <div style={{ background: '#15152a', border: '0.5px solid rgba(255,255,255,0.1)', borderRadius: 8, padding: 12, marginBottom: 8 }}>
+      <div style={{ background: 'var(--bg-panel)', border: '0.5px solid rgba(255,255,255,0.1)', borderRadius: 8, padding: 12, marginBottom: 8 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
           <div>
-            <div style={{ fontSize: 16, fontWeight: 500, color: '#fff' }}>{sel.sym}</div>
-            <div style={{ fontSize: 10, color: '#a8a9b4', marginTop: 2 }}>{sel.name} · {sel.sector}</div>
+            <div style={{ fontSize: 16, fontWeight: 500, color: 'var(--text-primary)' }}>{sel.sym}</div>
+            <div style={{ fontSize: 10, color: 'var(--text-secondary)', marginTop: 2 }}>{sel.name} · {sel.sector}</div>
           </div>
           <div style={{ textAlign: 'right' }}>
-            <div style={{ fontSize: 24, fontWeight: 500, color: '#fff' }}>${selPrice.cur.toFixed(2)}</div>
-            <div style={{ fontSize: 11, color: selPrice.chg >= 0 ? '#4ecca3' : '#e94560' }}>
+            <div style={{ fontSize: 24, fontWeight: 500, color: 'var(--text-primary)' }}>${selPrice.cur.toFixed(2)}</div>
+            <div style={{ fontSize: 11, color: selPrice.chg >= 0 ? 'var(--bull)' : 'var(--bear)' }}>
               {selPrice.chg >= 0 ? '+' : ''}{selPrice.chg.toFixed(2)}%
             </div>
           </div>
         </div>
         {/* Analyst strip — green, bullish — always */}
-        <div style={{ background: 'rgba(78,204,163,0.1)', border: '0.5px solid rgba(78,204,163,0.3)', borderRadius: 6, padding: 8 }}>
-          <div style={{ fontSize: 9, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#4ecca3', marginBottom: 3 }}>
+        <div style={{ background: 'rgba(61,220,132,0.1)', border: '0.5px solid rgba(61,220,132,0.3)', borderRadius: 6, padding: 8 }}>
+          <div style={{ fontSize: 9, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--bull)', marginBottom: 3 }}>
             Wall Street consensus — all you can see
           </div>
           <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.75)', lineHeight: 1.5 }}>{sel.analystNote}</div>
-          <div style={{ fontSize: 11, color: '#4ecca3', marginTop: 4, fontWeight: 500 }}>
+          <div style={{ fontSize: 11, color: 'var(--bull)', marginTop: 4, fontWeight: 500 }}>
             Buy · EPS est: {sel.eps} · PT: {sel.priceTarget}
           </div>
         </div>
       </div>
 
       {/* Trade bar */}
-      <div style={{ background: '#15152a', border: '0.5px solid rgba(255,255,255,0.1)', borderRadius: 8, padding: 10, marginBottom: 8 }}>
+      <div style={{ background: 'var(--bg-panel)', border: '0.5px solid rgba(255,255,255,0.1)', borderRadius: 8, padding: 10, marginBottom: 8 }}>
         <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
           <input
             type="number"
@@ -335,22 +335,22 @@ export default function GameScreen({ onReveal }: Props) {
             min={1}
             max={100}
             onChange={(e) => setQty(Math.max(1, parseInt(e.target.value) || 1))}
-            style={{ flex: 1, background: '#0d0d1a', border: '0.5px solid rgba(255,255,255,0.15)', borderRadius: 6, padding: '6px 10px', fontSize: 13, color: '#fff', fontFamily: 'Courier New, monospace' }}
+            style={{ flex: 1, background: 'var(--bg-void)', border: '0.5px solid rgba(255,255,255,0.15)', borderRadius: 6, padding: '6px 10px', fontSize: 13, color: 'var(--text-primary)', fontFamily: 'Courier New, monospace' }}
           />
-          <div style={{ fontSize: 11, color: '#a8a9b4', whiteSpace: 'nowrap', alignSelf: 'center' }}>
+          <div style={{ fontSize: 11, color: 'var(--text-secondary)', whiteSpace: 'nowrap', alignSelf: 'center' }}>
             Cost: ${Math.round(qty * selPrice.cur).toLocaleString()}
           </div>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
           <button
             onClick={() => placeTrade('buy')}
-            style={{ padding: 10, borderRadius: 6, fontSize: 12, fontWeight: 700, cursor: 'pointer', background: '#1fae7e', color: '#ffffff', border: '1px solid #1fae7e', fontFamily: 'Courier New, monospace' }}
+            style={{ padding: 10, borderRadius: 6, fontSize: 12, fontWeight: 700, cursor: 'pointer', background: 'var(--bull)', color: '#08100a', border: '1px solid var(--bull)', fontFamily: 'Courier New, monospace' }}
           >
             BUY {sel.sym}
           </button>
           <button
             onClick={() => placeTrade('sell')}
-            style={{ padding: 10, borderRadius: 6, fontSize: 12, fontWeight: 700, cursor: 'pointer', background: '#e94560', color: '#ffffff', border: '1px solid #e94560', fontFamily: 'Courier New, monospace' }}
+            style={{ padding: 10, borderRadius: 6, fontSize: 12, fontWeight: 700, cursor: 'pointer', background: 'var(--bear)', color: '#1a0606', border: '1px solid var(--bear)', fontFamily: 'Courier New, monospace' }}
           >
             SELL {sel.sym}
           </button>
@@ -358,16 +358,16 @@ export default function GameScreen({ onReveal }: Props) {
       </div>
 
       {/* Portfolio */}
-      <div style={{ background: '#15152a', border: '0.5px solid rgba(255,255,255,0.1)', borderRadius: 8, padding: 10, marginBottom: 8 }}>
-        <div style={{ fontSize: 22, fontWeight: 500, color: pnl >= 0 ? '#4ecca3' : '#e94560' }}>
+      <div style={{ background: 'var(--bg-panel)', border: '0.5px solid rgba(255,255,255,0.1)', borderRadius: 8, padding: 10, marginBottom: 8 }}>
+        <div style={{ fontSize: 22, fontWeight: 500, color: pnl >= 0 ? 'var(--bull)' : 'var(--bear)' }}>
           ${Math.round(pv).toLocaleString()}
         </div>
-        <div style={{ fontSize: 10, color: '#a8a9b4', marginTop: 2 }}>
-          Portfolio value · <span style={{ color: pnl >= 0 ? '#4ecca3' : '#e94560' }}>{pnl >= 0 ? '+' : ''}{pct}%</span>
+        <div style={{ fontSize: 10, color: 'var(--text-secondary)', marginTop: 2 }}>
+          Portfolio value · <span style={{ color: pnl >= 0 ? 'var(--bull)' : 'var(--bear)' }}>{pnl >= 0 ? '+' : ''}{pct}%</span>
         </div>
         <div style={{ marginTop: 8 }}>
           {Object.entries(holdings).filter(([, q]) => q > 0).length === 0 ? (
-            <div style={{ fontSize: 10, color: '#54577a', paddingTop: 5 }}>No positions</div>
+            <div style={{ fontSize: 10, color: 'var(--text-tertiary)', paddingTop: 5 }}>No positions</div>
           ) : (
             Object.entries(holdings).filter(([, q]) => q > 0).map(([sym, q]) => {
               const p = prices.find((p) => p.sym === sym)
@@ -375,9 +375,9 @@ export default function GameScreen({ onReveal }: Props) {
               const positionPnL = p ? q * (p.cur - base) : 0
               return (
                 <div key={sym} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, padding: '4px 0', borderBottom: '0.5px solid rgba(255,255,255,0.06)' }}>
-                  <span style={{ color: '#fff', fontWeight: 500 }}>{sym}</span>
-                  <span style={{ color: '#a8a9b4' }}>{q}sh</span>
-                  <span style={{ color: positionPnL >= 0 ? '#4ecca3' : '#e94560', fontWeight: 500 }}>
+                  <span style={{ color: 'var(--text-primary)', fontWeight: 500 }}>{sym}</span>
+                  <span style={{ color: 'var(--text-secondary)' }}>{q}sh</span>
+                  <span style={{ color: positionPnL >= 0 ? 'var(--bull)' : 'var(--bear)', fontWeight: 500 }}>
                     {positionPnL >= 0 ? '+' : ''}${Math.round(positionPnL)}
                   </span>
                 </div>
@@ -388,8 +388,8 @@ export default function GameScreen({ onReveal }: Props) {
       </div>
 
       {/* Hedge fund feed */}
-      <div style={{ background: 'rgba(83,74,183,0.1)', border: '0.5px solid rgba(83,74,183,0.35)', borderRadius: 8, padding: 8, marginBottom: 8 }}>
-        <div style={{ fontSize: 9, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#9b94e8', marginBottom: 4 }}>
+      <div style={{ background: 'rgba(199,146,255,0.1)', border: '0.5px solid rgba(199,146,255,0.35)', borderRadius: 8, padding: 8, marginBottom: 8 }}>
+        <div style={{ fontSize: 9, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--agentic)', marginBottom: 4 }}>
           Hedge fund — internal alt-data feed
         </div>
         <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.6)', lineHeight: 1.6 }}>{instMsg}</div>
@@ -398,7 +398,7 @@ export default function GameScreen({ onReveal }: Props) {
       {/* Trade log */}
       <div
         ref={logRef}
-        style={{ background: '#000000', border: '0.5px solid rgba(255,255,255,0.1)', borderRadius: 8, padding: 8, maxHeight: 70, overflowY: 'auto' }}
+        style={{ background: 'var(--bg-inset)', border: '0.5px solid rgba(255,255,255,0.1)', borderRadius: 8, padding: 8, maxHeight: 70, overflowY: 'auto' }}
       >
         {log.map((entry, i) => {
           const t = entry.t
@@ -409,7 +409,7 @@ export default function GameScreen({ onReveal }: Props) {
               key={i}
               style={{
                 fontSize: 10,
-                color: entry.type === 'buy' ? '#4ecca3' : entry.type === 'sell' ? '#e94560' : '#a8a9b4',
+                color: entry.type === 'buy' ? 'var(--bull)' : entry.type === 'sell' ? 'var(--bear)' : 'var(--text-secondary)',
                 padding: '1px 0',
                 lineHeight: 1.5,
               }}

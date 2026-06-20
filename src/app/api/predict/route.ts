@@ -9,6 +9,18 @@ export async function POST(req: NextRequest) {
     footTrafficData, satelliteData
   } = body
 
+  // Fetch the Bybit macro signal server-side so the predictive model
+  // always has the freshest reading, independent of whatever the
+  // client already cached for the signal cards.
+  let cryptoMacroScore: number | null = null
+  try {
+    const cryptoRes = await fetch(`${req.nextUrl.origin}/api/crypto-sentiment`)
+    const cryptoData = await cryptoRes.json()
+    cryptoMacroScore = cryptoData?.available ? cryptoData.macroScore : null
+  } catch {
+    cryptoMacroScore = null
+  }
+
   const inputs: SignalInputs = {
     insiderMspr: insiderData?.insiderSentiment?.mspr ?? null,
     edgarVelocity: insiderData?.edgarFilingVelocity?.velocity ?? null,
@@ -17,6 +29,7 @@ export async function POST(req: NextRequest) {
     footTrafficScore: footTrafficData?.aggregateScore ?? null,
     satelliteActivityScore: satelliteData?.available ? satelliteData?.aggregateActivityScore ?? null : null,
     priceChangePercent: quoteData?.changePercent ?? null,
+    cryptoMacroScore,
   }
 
   const prediction = runPredictiveModel(inputs)

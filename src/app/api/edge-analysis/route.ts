@@ -21,11 +21,11 @@ const CONVICTION_TOOL: Anthropic.Tool = {
       },
       agreeingSignalCount: {
         type: 'integer',
-        description: 'How many of the 7 signals point in the same direction as the final call.',
+        description: 'How many of the 8 signals point in the same direction as the final call.',
       },
       totalLiveSignals: {
         type: 'integer',
-        description: 'How many of the 7 signals actually returned usable live data (excludes signals in setup-needed or error state).',
+        description: 'How many of the 8 signals actually returned usable live data (excludes signals in setup-needed or error state).',
       },
       primarySignals: {
         type: 'array',
@@ -48,6 +48,14 @@ export async function POST(req: NextRequest) {
     insiderData, redditData, newsData, quoteData,
     footTrafficData, satelliteData
   } = body
+
+  let cryptoData: { available?: boolean; macroScore?: number; interpretation?: string } | null = null
+  try {
+    const cryptoRes = await fetch(`${req.nextUrl.origin}/api/crypto-sentiment`)
+    cryptoData = await cryptoRes.json()
+  } catch {
+    cryptoData = null
+  }
 
   const insiderSummary = insiderData?.insiderSentiment
     ? `MSPR score: ${insiderData.insiderSentiment.mspr} (${insiderData.insiderSentiment.interpretation}), ${insiderData.insiderTransactions?.netSentiment || 'unknown'} in recent transactions`
@@ -77,16 +85,21 @@ export async function POST(req: NextRequest) {
     ? `Satellite activity score: ${satelliteData.aggregateActivityScore} (${satelliteData.aggregateDirection}) — ${satelliteData.aggregateInterpretation}`
     : 'Satellite imagery unavailable — add Sentinel Hub credentials'
 
+  const cryptoSummary = cryptoData?.available
+    ? `Macro score ${cryptoData.macroScore! > 0 ? '+' : ''}${cryptoData.macroScore} — ${cryptoData.interpretation}. This is a MARKET-WIDE risk-appetite signal, not specific to ${symbol}.`
+    : 'Crypto macro data unavailable'
+
   const signalsBlock = `1. LIVE PRICE [Yahoo Finance]: ${priceSummary}
 2. INSIDER SENTIMENT MSPR [Finnhub / SEC Form 3/4/5]: ${insiderSummary}
 3. SEC EDGAR FORM 4 VELOCITY [data.sec.gov]: ${edgarSummary}
 4. REDDIT/SOCIAL SENTIMENT [ApeWisdom]: ${redditSummary}
 5. NEWS SENTIMENT [Finnhub]: ${newsSummary}
 6. FOOT TRAFFIC [Google Maps Popular Times]: ${footTrafficSummary}
-7. SATELLITE IMAGERY [ESA Sentinel-2]: ${satelliteSummary}`
+7. SATELLITE IMAGERY [ESA Sentinel-2]: ${satelliteSummary}
+8. CRYPTO MACRO RISK APPETITE [Bybit, BTC/ETH funding rates]: ${cryptoSummary}`
 
   // --- Agentic step 1: conviction agent ---
-  // Claude is given the 7 raw signals and must call set_conviction.
+  // Claude is given the 8 raw signals and must call set_conviction.
   // It decides, signal by signal, how many genuinely agree and how
   // confident that makes it — this judgment is not computed by a
   // hardcoded threshold in the frontend, it is the model's own call.
@@ -106,7 +119,7 @@ export async function POST(req: NextRequest) {
       tool_choice: { type: 'tool', name: 'set_conviction' },
       messages: [{
         role: 'user',
-        content: `You are the conviction-scoring agent inside VANTAGE, an alternative data platform. Given the 7 live signals below for ${symbol} (${name}, ${sector}), decide how many genuinely agree with each other and call set_conviction with your assessment. Treat any signal marked "unavailable" or "setup needed" as not live — do not count it toward totalLiveSignals or agreeingSignalCount. Be honest: if fewer than 3 signals are live, conviction must be "insufficient_data" regardless of direction.
+        content: `You are the conviction-scoring agent inside VANTAGE, an alternative data platform. Given the 8 live signals below for ${symbol} (${name}, ${sector}), decide how many genuinely agree with each other and call set_conviction with your assessment. Treat any signal marked "unavailable" or "setup needed" as not live — do not count it toward totalLiveSignals or agreeingSignalCount. Signal 8 (crypto macro risk appetite) is market-wide, not specific to ${symbol} — weight it as context, not as primary evidence for or against this specific stock. Be honest: if fewer than 3 signals are live, conviction must be "insufficient_data" regardless of direction.
 
 ${signalsBlock}`
       }],
@@ -138,7 +151,7 @@ ALTERNATIVE DATA DIRECTION (from demo game scenario): ${altDataDir === 'bull' ? 
 
 Write 3 tight paragraphs, plain text, no headers, no bullets, no markdown.
 
-Para 1: What signals 2-7 together tell you about ${symbol}'s operational reality right now. Be concrete about what each real signal means. Note which signals are genuinely from live data. The foot traffic and satellite signals are the most like what hedge funds pay millions for — emphasise these.
+Para 1: What signals 2-8 together tell you about ${symbol}'s operational reality right now. Be concrete about what each real signal means. Note which signals are genuinely from live data. The foot traffic and satellite signals are the most like what hedge funds pay millions for — emphasise these. The crypto macro signal (8) is market-wide context, not stock-specific — mention it only briefly as background risk appetite, don't treat it as primary evidence about ${symbol} itself.
 
 Para 2: Where the data aligns with or diverges from analyst consensus. The retail investor only sees analyst notes and news. What are they missing from these alternative signals?
 

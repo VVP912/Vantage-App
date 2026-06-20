@@ -43,7 +43,7 @@ export function assessRisk(prediction: PredictionResult): RiskAssessment {
     return {
       recommendedAction: 'insufficient_data',
       maxPositionSizePercent: 0,
-      rationale: `Fewer than 3 of 7 signals returned live data. The model will not size a position on this few data points — this is a hard rule, not a soft suggestion.`,
+      rationale: `Fewer than 3 of ${prediction.signalBreakdown.length} signals returned live data. The model will not size a position on this few data points — this is a hard rule, not a soft suggestion.`,
       warnings: ['Insufficient live signal coverage to form any view.'],
     }
   }
@@ -95,7 +95,7 @@ export function assessRisk(prediction: PredictionResult): RiskAssessment {
 
   if (prediction.liveSignalCount < 5) {
     warnings.push(
-      `Only ${prediction.liveSignalCount} of 7 signals were live for this call — position size reduced to reflect lower data coverage.`
+      `Only ${prediction.liveSignalCount} of ${prediction.signalBreakdown.length} signals were live for this call — position size reduced to reflect lower data coverage.`
     )
     baseSize *= 0.7
   }
@@ -107,7 +107,7 @@ export function assessRisk(prediction: PredictionResult): RiskAssessment {
   return {
     recommendedAction: prediction.predictedDirection === 'bullish' ? 'consider_long' : 'consider_short',
     maxPositionSizePercent: parseFloat(baseSize.toFixed(1)),
-    rationale: `${prediction.confidenceBand} confidence, ${prediction.liveSignalCount}/7 signals live, composite score ${prediction.compositeScore > 0 ? '+' : ''}${prediction.compositeScore}. Position size scaled to confidence band and hard-capped at ${MAX_POSITION_SIZE_CAP}% regardless of score strength.`,
+    rationale: `${prediction.confidenceBand} confidence, ${prediction.liveSignalCount}/${prediction.signalBreakdown.length} signals live, composite score ${prediction.compositeScore > 0 ? '+' : ''}${prediction.compositeScore}. Position size scaled to confidence band and hard-capped at ${MAX_POSITION_SIZE_CAP}% regardless of score strength.`,
     warnings,
   }
 }

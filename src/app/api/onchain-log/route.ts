@@ -91,14 +91,16 @@ export async function GET(req: NextRequest) {
 
     const [totalResolved, totalCorrect] = await contract.getAccuracyStats()
     const predictionCount = await contract.predictionCount()
+    const totalResolvedNum = Number(totalResolved)
+    const totalCorrectNum = Number(totalCorrect)
 
     return NextResponse.json({
       available: true,
       predictionCount: Number(predictionCount),
-      totalResolved: Number(totalResolved),
-      totalCorrect: Number(totalCorrect),
-      accuracyPercent: totalResolved > 0
-        ? parseFloat(((Number(totalCorrect) / Number(totalResolved)) * 100).toFixed(1))
+      totalResolved: totalResolvedNum,
+      totalCorrect: totalCorrectNum,
+      accuracyPercent: totalResolvedNum > 0
+        ? parseFloat(((totalCorrectNum / totalResolvedNum) * 100).toFixed(1))
         : null,
       contractAddress: config.contractAddress,
       network: 'Polygon Amoy (testnet, chain id 80002)',

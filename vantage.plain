@@ -30,9 +30,9 @@ import:
 
 - :RevealScreen: is the screen shown immediately after :GameResult: is produced, displaying three summary cards (user P&L, hedge fund P&L, data advantage in dollars), a stock-by-stock comparison table showing analyst rating, alternative-data direction, actual result, user P&L per stock, and hedge fund P&L per stock for every :Stock: in :StockUniverse:, a panel listing what alternative data the hedge fund used per stock, and a streamed natural-language explanation from :ReasoningService:.
 
-- :EdgeScreen: is the product screen shown after :RevealScreen:, allowing the user to select any :Stock: from :StockUniverse: and view seven live alternative-data signals for it sourced from :SignalSources:, an AI-synthesised verdict comparing the data to analyst consensus, a streamed full analysis from :ReasoningService:, recent news headlines, and a $29-per-month subscription pricing strip.
+- :EdgeScreen: is the product screen shown after :RevealScreen:, allowing the user to select any :Stock: from :StockUniverse: and view eight live alternative-data signals for it sourced from :SignalSources:, an AI-synthesised verdict comparing the data to analyst consensus, a streamed full analysis from :ReasoningService:, recent news headlines, and a $29-per-month subscription pricing strip.
 
-- :SignalSources: is the set of seven data integrations used by :EdgeScreen:: :LiveQuoteService: for price, :InsiderDataService: for insider sentiment and SEC Form 4 filing velocity, :RedditSentimentService: for social mention tracking, :NewsSentimentService: for news sentiment, :FootTrafficService: for real-time location busyness, and :SatelliteService: for facility activity change detection.
+- :SignalSources: is the set of eight data integrations used by :EdgeScreen:: :LiveQuoteService: for price, :InsiderDataService: for insider sentiment and SEC Form 4 filing velocity, :RedditSentimentService: for social mention tracking, :NewsSentimentService: for news sentiment, :FootTrafficService: for real-time location busyness, :SatelliteService: for facility activity change detection, and :CryptoMacroService: for market-wide risk appetite context.
 
 - :InsiderDataService: is a server-side integration combining the Finnhub API (insider sentiment MSPR score and Form 3/4/5 transactions) and the SEC EDGAR API (Form 4 filing velocity over 30 and 90 days), requiring a Finnhub API key and no key for SEC EDGAR beyond a User-Agent header.
 
@@ -44,13 +44,15 @@ import:
 
 - :SatelliteService: is a server-side integration with the Sentinel Hub Statistical API (ESA Copernicus Data Space Ecosystem) that computes NDVI and NDBI change between the most recent 30-day window and the prior 30-day window over fixed facility bounding-box coordinates per :Stock:, requiring a Sentinel Hub OAuth client ID and secret.
 
+- :CryptoMacroService: is a server-side integration with Bybit's public V5 market data API, requiring no authentication, that fetches the current BTCUSDT and ETHUSDT perpetual futures tickers and computes a composite macro risk-appetite score from their 24-hour price change and perpetual funding rates. Unlike the other six members of :SignalSources:, :CryptoMacroService: produces a single market-wide value rather than a per-:Stock: value, since crowded perpetual funding-rate positioning is a recognised proxy for broad risk-on or risk-off sentiment that is not specific to any individual equity. :CryptoMacroService: is fetched once per :EdgeScreen: session rather than re-fetched on every :Stock: selection, since its value does not depend on the selected :Stock:.
+
 - :ReasoningService: is a server-side integration with the Anthropic Messages API using the claude-sonnet-4-6 model, streamed via server-sent events, used to generate the :RevealScreen: explanation and the :EdgeScreen: per-stock analysis from the live signal data.
 
-- :ConvictionAgent: is an agentic step within :EdgeScreen:'s analysis request, implemented as a separate, non-streamed call to :ReasoningService: that is forced to invoke a single tool named "set_conviction" rather than producing free-text output. :ConvictionAgent: is given the raw values of all seven :SignalSources: for the selected :Stock: and must decide, without any hardcoded threshold logic supplied by :App:, a conviction level of "high", "moderate", "low", or "insufficient_data", how many of the live signals agree with each other, how many signals returned usable live data at all, which one to three signals it weighted most heavily, and a one-sentence justification referencing specific signal values. :ConvictionAgent: must classify conviction as "insufficient_data" whenever fewer than three of the seven signals returned live data, regardless of the direction those signals point.
+- :ConvictionAgent: is an agentic step within :EdgeScreen:'s analysis request, implemented as a separate, non-streamed call to :ReasoningService: that is forced to invoke a single tool named "set_conviction" rather than producing free-text output. :ConvictionAgent: is given the raw values of all eight :SignalSources: for the selected :Stock: and must decide, without any hardcoded threshold logic supplied by :App:, a conviction level of "high", "moderate", "low", or "insufficient_data", how many of the live signals agree with each other, how many signals returned usable live data at all, which one to three signals it weighted most heavily, and a one-sentence justification referencing specific signal values. :ConvictionAgent: must classify conviction as "insufficient_data" whenever fewer than three of the eight signals returned live data, regardless of the direction those signals point.
 
 - :ConvictionResult: is the structured output of :ConvictionAgent:, sent to the client as the first server-sent event in the :EdgeScreen: analysis stream, before the streamed prose synthesis begins, so that a conviction badge can render ahead of the full written analysis.
 
-- :PredictiveModel: is a deterministic, rule-based scoring function, not an LLM call, that normalises each of the seven :SignalSources: values to a range of -1 to +1, multiplies each by a fixed, disclosed weight, and sums the result into a single composite score also ranging -1 to +1. The seven weights sum to 1.0 and are assigned by data-quality rationale rather than backtested optimisation: satellite imagery and foot traffic receive the highest weights as the closest free proxies to institutional-grade alternative data, and news sentiment receives the lowest weight as the most commoditised, already-priced-in signal. :PredictiveModel: must classify its own confidence as "insufficient_data" whenever fewer than three of the seven signals returned live data, mirroring :ConvictionAgent:'s own rule, and must surface an explicit overfitting caveat explaining why no machine-learning model trained on historical outcomes is used given the small demo dataset available.
+- :PredictiveModel: is a deterministic, rule-based scoring function, not an LLM call, that normalises each of the eight :SignalSources: values to a range of -1 to +1, multiplies each by a fixed, disclosed weight, and sums the result into a single composite score also ranging -1 to +1. The eight weights sum to 1.0 and are assigned by data-quality rationale rather than backtested optimisation: satellite imagery and foot traffic receive the highest weights as the closest free proxies to institutional-grade alternative data, :CryptoMacroService: receives one of the lowest weights since it is a market-wide signal rather than a :Stock:-specific one, and news sentiment receives the lowest weight as the most commoditised, already-priced-in signal. :PredictiveModel: must classify its own confidence as "insufficient_data" whenever fewer than three of the eight signals returned live data, mirroring :ConvictionAgent:'s own rule, and must surface an explicit overfitting caveat explaining why no machine-learning model trained on historical outcomes is used given the small demo dataset available.
 
 - :RiskAssessment: is a function that converts a :PredictiveModel: result into a bounded position-sizing recommendation. :RiskAssessment: should never recommend a position size above a fixed hard cap regardless of how strong the composite score is, should recommend "no_position" whenever the signals that meaningfully contributed to the composite score meaningfully disagree with each other (a circuit-breaker for conflicting data), and should recommend "insufficient_data" with zero position size whenever :PredictiveModel: itself reports insufficient data.
 
@@ -60,7 +62,7 @@ import:
 
 - :MainExecutableFile: of :App: should be the Next.js App Router entry at "src/app/page.tsx".
 - :App: should be implemented in TypeScript using the Next.js 14 App Router.
-- All seven integrations in :SignalSources: should be implemented as Next.js API routes under "src/app/api/" and called from the client only through those routes, never directly from the browser.
+- All eight integrations in :SignalSources: should be implemented as Next.js API routes under "src/app/api/" and called from the client only through those routes, never directly from the browser.
 - :GameScreen: should fetch all six :GameStartPrice: values in a single batched API call rather than six sequential calls.
 - If :LiveQuoteService: fails for any :Stock:, :GameStartPrice: for that :Stock: should fall back to its hardcoded reference price without interrupting :App:.
 - Buy and sell controls in :GameScreen: should use solid, opaque background colors that are visually distinct from the dark page background in their default unhovered state, not translucent overlays.
@@ -80,7 +82,7 @@ import:
 - :GameResult:'s hedge fund profit-or-loss calculation should be tested to confirm it is strictly positive for every :Stock: with alternative-data direction "bull" or "bear", and zero for "neut".
 - Each API route backing :SignalSources: should be tested to confirm it returns a graceful fallback response, not a 500 error, when its required API key is absent.
 - :ConvictionAgent: should be tested to confirm it returns "insufficient_data" as the conviction level whenever fewer than three signals are live, even when the available signals strongly agree.
-- :PredictiveModel: should be tested to confirm its seven signal weights sum to 1.0, and that its composite score remains within the range -1 to +1 for any combination of valid signal inputs.
+- :PredictiveModel: should be tested to confirm its eight signal weights sum to 1.0, and that its composite score remains within the range -1 to +1 for any combination of valid signal inputs.
 - :RiskAssessment: should be tested to confirm it never returns a position size above the fixed hard cap regardless of how extreme the composite score is, and that it returns "no_position" when meaningfully contributing signals are evenly split between bullish and bearish.
 
 ***functional specs***
@@ -120,25 +122,25 @@ import:
 
 - Transition from :RevealScreen: to :EdgeScreen: when the user clicks the "Get the same data they had" button.
 
-- Allow the user to select any :Stock: from :StockUniverse: on :EdgeScreen: and display all seven signals from :SignalSources: for that :Stock:.
+- Allow the user to select any :Stock: from :StockUniverse: on :EdgeScreen: and display all eight signals from :SignalSources: for that :Stock:.
 
   ***acceptance tests***
-  - Switching the selected :Stock: on :EdgeScreen: should trigger a fresh fetch of all seven signals for the newly selected :Stock:.
+  - Switching the selected :Stock: on :EdgeScreen: should trigger a fresh fetch of all eight signals for the newly selected :Stock:.
   - Each signal card should display its data source name and whether it is free or requires a paid tier.
 
-- Run :ConvictionAgent: against the seven live signals for the selected :Stock: and display its :ConvictionResult: as a badge before the streamed synthesis text appears.
+- Run :ConvictionAgent: against the eight live signals for the selected :Stock: and display its :ConvictionResult: as a badge before the streamed synthesis text appears.
 
   ***acceptance tests***
   - The conviction badge should display one of "high", "moderate", "low", or "insufficient data" with the count of agreeing signals out of total live signals.
   - The conviction badge should display the one to three signal names :ConvictionAgent: weighted most heavily.
   - If :ConvictionAgent: returns no result, :EdgeScreen: should still render the rest of the page without an error.
 
-- Stream a natural-language synthesis from :ReasoningService: on :EdgeScreen: combining all seven live signal values for the selected :Stock:.
+- Stream a natural-language synthesis from :ReasoningService: on :EdgeScreen: combining all eight live signal values for the selected :Stock:.
 
   ***acceptance tests***
   - The synthesis should reference at least the satellite and foot traffic signals by name when both are available.
 
-- Run :PredictiveModel: against the seven live signals for the selected :Stock: independently of :ConvictionAgent:, and display the composite score, predicted direction, confidence band, and a per-signal breakdown showing each signal's weight and contribution.
+- Run :PredictiveModel: against the eight live signals for the selected :Stock: independently of :ConvictionAgent:, and display the composite score, predicted direction, confidence band, and a per-signal breakdown showing each signal's weight and contribution.
 
   ***acceptance tests***
   - The displayed signal weights should sum to 1.0.

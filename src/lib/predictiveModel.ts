@@ -7,7 +7,7 @@
  * (see SIGNAL_WEIGHTS comments) rather than hidden inside a prompt.
  *
  * Methodology:
- * 1. Each of the 7 signals is normalised to a [-1, +1] directional score.
+ * 1. Each of the 8 signals is normalised to a [-1, +1] directional score.
  * 2. Each signal is weighted by how close it is to institutional-grade
  *    alternative data (satellite + foot traffic weighted highest, since
  *    they are the hardest for retail to fake/access elsewhere; news
@@ -34,6 +34,7 @@ export interface SignalInputs {
   footTrafficScore: number | null     // 0 to 100
   satelliteActivityScore: number | null // unbounded, typically -10 to +10
   priceChangePercent: number | null   // today's % move
+  cryptoMacroScore: number | null     // -1 to +1, Bybit funding rate + price action composite
 }
 
 export interface SignalWeight {
@@ -48,14 +49,20 @@ export interface SignalWeight {
 // alternative data (Planet Labs, SafeGraph) — hardest to manipulate,
 // hardest for retail to access elsewhere. News sentiment carries the
 // least weight because it is the most commoditised, already-priced-in
-// signal available to every retail investor via any news app.
+// signal available to every retail investor via any news app. The
+// crypto macro signal is weighted lowest of all — it is a market-wide
+// risk-appetite gauge, not a stock-specific signal, so it should never
+// dominate a single-name call, but it is real, live, free institutional-
+// style data (funding rates) that genuinely correlates with risk
+// positioning, so it earns a small, disclosed weight rather than zero.
 export const SIGNAL_WEIGHTS: SignalWeight[] = [
-  { key: 'satelliteActivityScore', label: 'Satellite imagery', weight: 0.22, rationale: 'Closest free proxy to institutional-grade facility data (Planet Labs equivalent)' },
-  { key: 'footTrafficScore', label: 'Foot traffic', weight: 0.20, rationale: 'Closest free proxy to institutional-grade consumer data (SafeGraph equivalent)' },
-  { key: 'insiderMspr', label: 'Insider sentiment (MSPR)', weight: 0.18, rationale: 'Same underlying SEC Form 3/4/5 data institutions use, pre-aggregated' },
-  { key: 'edgarVelocity', label: 'SEC Form 4 velocity', weight: 0.15, rationale: 'Same raw EDGAR filing data institutions monitor, unprocessed' },
-  { key: 'redditMentionChange', label: 'Reddit sentiment', weight: 0.12, rationale: 'Legitimate retail-attention proxy, but noisier and easier to manipulate' },
+  { key: 'satelliteActivityScore', label: 'Satellite imagery', weight: 0.21, rationale: 'Closest free proxy to institutional-grade facility data (Planet Labs equivalent)' },
+  { key: 'footTrafficScore', label: 'Foot traffic', weight: 0.19, rationale: 'Closest free proxy to institutional-grade consumer data (SafeGraph equivalent)' },
+  { key: 'insiderMspr', label: 'Insider sentiment (MSPR)', weight: 0.17, rationale: 'Same underlying SEC Form 3/4/5 data institutions use, pre-aggregated' },
+  { key: 'edgarVelocity', label: 'SEC Form 4 velocity', weight: 0.14, rationale: 'Same raw EDGAR filing data institutions monitor, unprocessed' },
+  { key: 'redditMentionChange', label: 'Reddit sentiment', weight: 0.11, rationale: 'Legitimate retail-attention proxy, but noisier and easier to manipulate' },
   { key: 'priceChangePercent', label: 'Price momentum', weight: 0.08, rationale: 'Public market data, lowest information content of the set' },
+  { key: 'cryptoMacroScore', label: 'Crypto macro (Bybit)', weight: 0.05, rationale: 'Market-wide risk-appetite proxy via BTC/ETH funding rates — not stock-specific, so weighted lowest, but real institutional-style positioning data' },
   { key: 'newsBullishPercent', label: 'News sentiment', weight: 0.05, rationale: 'Most commoditised signal — already priced in, available to all retail' },
 ]
 
@@ -67,12 +74,17 @@ function normaliseSignal(key: keyof SignalInputs, value: number | string | null)
       // -100..+100 -> -1..+1
       return Math.max(-1, Math.min(1, (value as number) / 100))
     case 'edgarVelocity':
-      // categorical -> directional proxy (high velocity is attention-worthy,
-      // not inherently bullish or bearish on its own, so weight lightly toward 0
-      // unless combined with other signals — handled by caller pre-direction)
-      if (value === 'High') return 0.4
-      if (value === 'Moderate') return 0.1
-      return -0.1
+      // EDGAR Form 4 velocity is a COUNT of filing activity with no
+      // buy/sell direction encoded — it cannot tell us whether insiders
+      // are buying or selling, only that something unusual is happening.
+      // We deliberately do not treat high velocity as bullish or bearish
+      // on its own; it nudges the composite score only slightly, as an
+      // "increased attention" signal, not a directional one. The real
+      // direction for insider activity comes from insiderMspr instead,
+      // which IS directional (derived from actual buy/sell transactions).
+      if (value === 'High') return 0.15
+      if (value === 'Moderate') return 0.05
+      return 0
     case 'redditMentionChange':
       // percentage change, clamp to +/-100% then normalise
       return Math.max(-1, Math.min(1, (value as number) / 100))
@@ -88,6 +100,9 @@ function normaliseSignal(key: keyof SignalInputs, value: number | string | null)
     case 'priceChangePercent':
       // daily % move, clamp at +/-5%
       return Math.max(-1, Math.min(1, (value as number) / 5))
+    case 'cryptoMacroScore':
+      // already pre-normalised to roughly -1..+1 by the crypto-sentiment route
+      return Math.max(-1, Math.min(1, value as number))
     default:
       return 0
   }
@@ -140,7 +155,7 @@ export function runPredictiveModel(inputs: SignalInputs): PredictionResult {
   // agent's own rule: fewer than 3 live signals = insufficient_data,
   // regardless of how strong the composite score looks, because a
   // strong score from 2 signals is far more likely to be noise/overfit
-  // than the same score from 6-7 signals.
+  // than the same score from 7-8 signals.
   let confidenceBand: PredictionResult['confidenceBand']
   if (liveSignalCount < 3) {
     confidenceBand = 'insufficient_data'
@@ -153,7 +168,7 @@ export function runPredictiveModel(inputs: SignalInputs): PredictionResult {
   }
 
   const overfittingCaveat = liveSignalCount < 3
-    ? `Only ${liveSignalCount} of 7 signals returned live data. With this few inputs, any composite score is statistically unreliable — treat as insufficient data, not a real prediction.`
+    ? `Only ${liveSignalCount} of ${SIGNAL_WEIGHTS.length} signals returned live data. With this few inputs, any composite score is statistically unreliable — treat as insufficient data, not a real prediction.`
     : `This model is rule-based and weight-fixed, not trained on historical outcomes. With a small universe of demo stocks and no real trade history to validate against, a trained ML model here would overfit and misreport its own reliability. The weights above were chosen by data-quality rationale (see each signal's weight reasoning), not backtested optimisation — this is a deliberate, disclosed limitation, not a hidden one.`
 
   return {

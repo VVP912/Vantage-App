@@ -9,7 +9,7 @@ A two-act product that first exposes how hedge funds use alternative data to tra
 VANTAGE was built for the BGA "AI Trading & Strategy" track, which explicitly rewards better systems over higher returns. Each criterion maps to a specific part of the build:
 
 - **Alignment with BGA ethos** — the entire product is a reducing-information-asymmetry mechanism, not a PnL-maximisation tool. The game and product never claim to predict winning trades; they expose what data institutions have that retail doesn't.
-- **Innovation & technical depth** — 7 real external data integrations, a genuinely agentic conviction step (forced tool-use, not prompt dressing), a deterministic predictive scoring model, and a real Solidity contract on a live testnet.
+- **Innovation & technical depth** — 8 real external data integrations including Bybit's public crypto market API, a genuinely agentic conviction step (forced tool-use, not prompt dressing), a deterministic predictive scoring model, and a real Solidity contract on a live testnet.
 - **Strategy design & risk management** — explicit, hard-capped position sizing and a circuit breaker that recommends no position when signals conflict, rather than always forcing a directional call. See "Predictive model, risk management, and on-chain verification" below.
 - **Transparency & verifiability** — every signal's source, cost, and free/paid status is shown in the UI; the predictive model's weights and rationale are visible, not hidden in a prompt; conviction calls can be logged on-chain and independently verified before the outcome is known.
 - **Real-world impact** — closes a genuine $2-5M/year vs $29/month access gap for retail investors.
@@ -25,6 +25,7 @@ VANTAGE was built for the BGA "AI Trading & Strategy" track, which explicitly re
 | **ApeWisdom** | Reddit mentions across r/wallstreetbets, r/stocks, r/options, r/investing | Free | None |
 | **Google Maps Popular Times** | Real-time foot traffic / busyness scores for company locations | Free tier | API key |
 | **ESA Copernicus Sentinel-2** | Satellite facility activity via NDVI/NDBI change detection | Free tier | OAuth client ID + secret |
+| **Bybit V5 public API** | Crypto market-wide risk appetite via BTC/ETH perpetual funding rates | Free | None |
 
 ### What each signal means
 
@@ -41,6 +42,8 @@ VANTAGE was built for the BGA "AI Trading & Strategy" track, which explicitly re
 **Google Maps Popular Times** — Real busyness scores (0-100) for specific company locations, derived from opted-in location history. The closest free proxy to commercial foot-traffic data like SafeGraph or Placer.ai.
 
 **ESA Sentinel-2 satellite** — NDVI/NDBI change detection over company facility bounding boxes, comparing the most recent 30 days to the prior 30. A genuine, free proxy for the kind of facility-activity signal hedge funds pay Planet Labs or Maxar millions per year for, at lower resolution and revisit frequency.
+
+**Bybit crypto macro (BTC/ETH funding rates)** — VANTAGE trades equities, not crypto, so this isn't a trading-venue integration. It's an eighth signal: Bybit's public, no-key market data on BTCUSDT and ETHUSDT perpetual futures, specifically the funding rate, used as a market-wide risk-appetite gauge. A strongly positive funding rate means leveraged long positioning is crowded across crypto markets — historically a real, widely-watched proxy for broader risk-on euphoria that often correlates with equity market behaviour too. This is genuinely how some institutional desks use crypto positioning data: as macro context, not as a stock-specific signal. It's weighted lowest of all eight signals in the predictive model for exactly that reason — market-wide, not company-specific — but it's live, real, and disclosed rather than a stretch claim of "blockchain integration."
 
 ## Architecture
 
@@ -95,7 +98,7 @@ Most of VANTAGE's Claude calls are single-shot generation: feed pre-fetched data
 
 The one genuinely agentic step is the **conviction agent** inside `/api/edge-analysis`. Before the prose synthesis is generated, a separate call to Claude is made with `tool_choice` forced to a single tool, `set_conviction`. Claude is handed the seven raw live signal values for the selected stock and must commit to a structured decision — a conviction level (high / moderate / low / insufficient data), how many of the live signals actually agree with each other, which signals it weighted most heavily, and a one-sentence justification — without any hardcoded threshold logic from the app telling it how to decide.
 
-This matters for two reasons. First, it's auditable: the conviction badge shown on the product screen is the model's own structured judgment, not a `score > 5 ? 'bullish' : 'bearish'` if-statement dressed up in a prompt. Second, it's honest about data quality — the agent is instructed to return "insufficient data" whenever fewer than three of the seven signals returned live data, regardless of which direction those signals point, so a sparse dataset can't be spun into false confidence.
+This matters for two reasons. First, it's auditable: the conviction badge shown on the product screen is the model's own structured judgment, not a `score > 5 ? 'bullish' : 'bearish'` if-statement dressed up in a prompt. Second, it's honest about data quality — the agent is instructed to return "insufficient data" whenever fewer than three of the eight signals returned live data, regardless of which direction those signals point, so a sparse dataset can't be spun into false confidence.
 
 The conviction result streams to the client as the first server-sent event, ahead of the prose analysis, so the badge renders before the written synthesis starts typing out.
 
@@ -103,7 +106,7 @@ The conviction result streams to the client as the first server-sent event, ahea
 
 Three further additions built specifically to address strategy design, risk management, and transparency as real systems, not just framing.
 
-**Predictive model (`src/lib/predictiveModel.ts`)** — a deterministic, rule-based weighted scoring function, not an LLM call. Each of the 7 signals is normalised to [-1, +1], multiplied by a fixed weight (weights sum to 1.0), and summed into a composite score. Weights are assigned by data-quality rationale — satellite and foot traffic carry the most weight as the closest free proxies to institutional-grade data, news sentiment carries the least as the most commoditised signal — not by backtesting, because with only 6 demo stocks and no real trade history, a trained ML model would overfit and misrepresent its own reliability. That limitation is disclosed in the UI, not hidden. The model returns "insufficient data" confidence whenever fewer than 3 of 7 signals are live, mirroring the conviction agent's own rule.
+**Predictive model (`src/lib/predictiveModel.ts`)** — a deterministic, rule-based weighted scoring function, not an LLM call. Each of the 8 signals is normalised to [-1, +1], multiplied by a fixed weight (weights sum to 1.0), and summed into a composite score. Weights are assigned by data-quality rationale — satellite and foot traffic carry the most weight as the closest free proxies to institutional-grade data, news sentiment carries the least as the most commoditised signal — not by backtesting, because with only 6 demo stocks and no real trade history, a trained ML model would overfit and misrepresent its own reliability. That limitation is disclosed in the UI, not hidden. The model returns "insufficient data" confidence whenever fewer than 3 of 8 signals are live, mirroring the conviction agent's own rule.
 
 **Risk management (`src/lib/riskManagement.ts`)** — converts the predictive model's output into a bounded, explainable position-sizing recommendation. Position size scales with confidence but is hard-capped at 8% of a hypothetical portfolio regardless of how strong the composite score is. If signals meaningfully disagree with each other, the system explicitly recommends "no position" rather than forcing a directional call — a real circuit breaker against overconfidence, not just a disclaimer.
 
@@ -135,7 +138,7 @@ vercel --prod
 ## Business model
 
 - **$29/month** subscription
-- 7 real alternative data signals per stock (expandable to 50+ stocks)
+- 8 real alternative data signals per stock (expandable to 50+ stocks)
 - Target: active, short-term retail traders (50+ trades/year) who position around earnings and other near-term catalysts, not buy-and-hold investors
 - TAM: 150M retail investors in the US
 - Referral revenue potential from brokers (Fidelity, IBKR) who benefit from informed investors
