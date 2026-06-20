@@ -1,0 +1,61 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --ink: #0d0d1a;
+  --ink2: #16213e;
+  --accent: #e94560;
+  --teal: #4ecca3;
+  --gold: #f5a623;
+  --purple: #7F77DD;
+  --dim: #54577a;
+  --soft: #a8a9b4;
+  --card: rgba(255,255,255,0.04);
+  --border: rgba(255,255,255,0.10);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Courier New', monospace;
+}
+
+.font-mono {
+  font-family: 'Courier New', monospace;
+}
+
+/* Dark screen */
+.screen-dark {
+  background: #0d0d1a;
+  min-height: 100vh;
+}
+
+/* Light screen */
+.screen-light {
+  background: #ffffff;
+  min-height: 100vh;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 2px; }
+
+/* Streaming text animation */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.fade-in {
+  animation: fadeIn 0.3s ease;
+}
+
+/* Mini chart bars */
+.mini-bar-bull { background: #639922; opacity: 0.7; }
+.mini-bar-bear { background: #E24B4A; opacity: 0.7; }
+.mini-bar-neut { background: #BA7517; opacity: 0.7; }

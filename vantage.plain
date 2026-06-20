@@ -1,0 +1,129 @@
+---
+description: 'VANTAGE — alternative data trading game and intelligence platform'
+import:
+  - typescript-nextjs-app-template
+---
+
+***definitions***
+
+- :App: is a Next.js 14 web application called VANTAGE with four sequential screens: :TitleScreen:, :GameScreen:, :RevealScreen:, and :EdgeScreen:.
+
+- :Stock: is a definition consisting of a ticker symbol, company name, sector, a starting price sourced live from :LiveQuoteService: with a hardcoded fallback price, a volatility coefficient, an analyst note string that is always bullish in tone, an EPS estimate, a price target, an alternative-data direction of either "bull", "bear", or "neut", an actual earnings result expressed as a signed percentage, a result note string, and a hedge fund action string.
+
+- :StockUniverse: is a fixed list of six :Stock: definitions: NVDA, AAPL, TSLA, META, JPM, AMZN. Of these, NVDA and TSLA have alternative-data direction "bear", AAPL, META, and AMZN have alternative-data direction "bull", and JPM has alternative-data direction "neut".
+
+- :LiveQuoteService: is a server-side integration with the Yahoo Finance API (via the yahoo-finance2 package) that fetches real-time price and percentage change for a given ticker symbol, with a fallback to a hardcoded reference price if the live fetch fails.
+
+- :TitleScreen: is the landing screen of :App: that explains the premise: all six stocks in :StockUniverse: are analyst-rated Buy, but a hedge fund has access to alternative data the user does not, and starts :GameScreen: when the user clicks the start button.
+
+- :GameScreen: is a 90-second timed trading simulation in which the user starts with $10,000 of virtual cash, can select any :Stock: from :StockUniverse: via a tab interface, can buy or sell shares of the selected :Stock: at its live-updating simulated price, and sees only the bullish :AnalystNote: for each stock — never the alternative-data direction or actual result.
+
+- :GameStartPrice: of each :Stock: in :GameScreen: is fetched from :LiveQuoteService: when :GameScreen: mounts, and is used as the base price from which the scripted earnings-result price movement for that :Stock: is calculated for the remainder of the session.
+
+- :PriceSimulation: is the per-tick price update logic in :GameScreen: that applies small random volatility plus a deterministic drift term derived from each :Stock:'s actual earnings result, scaled across the 90-second session, anchored to :GameStartPrice:.
+
+- :HedgeFundFeed: is a rotating message panel in :GameScreen: that displays simulated alternative-data commentary referencing satellite imagery, credit card spend, job postings, and shipping volumes for the :Stock: currently being traded, without revealing the final result.
+
+- :TradeLog: is a scrolling timestamped list in :GameScreen: of every buy and sell action taken by the user during the session.
+
+- :GameResult: is a definition produced when :GameScreen:'s 90-second timer reaches zero, consisting of the user's final portfolio profit-or-loss, a calculated hedge fund profit-or-loss derived from a fixed $2,000 notional position per :Stock: applied in the direction of that :Stock:'s alternative-data direction, the dollar difference between the two as the data advantage, the full list of trades made, the user's final holdings, and the final post-earnings price of every :Stock: in :StockUniverse:.
+
+- :RevealScreen: is the screen shown immediately after :GameResult: is produced, displaying three summary cards (user P&L, hedge fund P&L, data advantage in dollars), a stock-by-stock comparison table showing analyst rating, alternative-data direction, actual result, user P&L per stock, and hedge fund P&L per stock for every :Stock: in :StockUniverse:, a panel listing what alternative data the hedge fund used per stock, and a streamed natural-language explanation from :ReasoningService:.
+
+- :EdgeScreen: is the product screen shown after :RevealScreen:, allowing the user to select any :Stock: from :StockUniverse: and view seven live alternative-data signals for it sourced from :SignalSources:, an AI-synthesised verdict comparing the data to analyst consensus, a streamed full analysis from :ReasoningService:, recent news headlines, and a $29-per-month subscription pricing strip.
+
+- :SignalSources: is the set of seven data integrations used by :EdgeScreen:: :LiveQuoteService: for price, :InsiderDataService: for insider sentiment and SEC Form 4 filing velocity, :RedditSentimentService: for social mention tracking, :NewsSentimentService: for news sentiment, :FootTrafficService: for real-time location busyness, and :SatelliteService: for facility activity change detection.
+
+- :InsiderDataService: is a server-side integration combining the Finnhub API (insider sentiment MSPR score and Form 3/4/5 transactions) and the SEC EDGAR API (Form 4 filing velocity over 30 and 90 days), requiring a Finnhub API key and no key for SEC EDGAR beyond a User-Agent header.
+
+- :RedditSentimentService: is a server-side integration with the ApeWisdom API that returns ticker mention rank, mention count, and 24-hour mention change across Reddit investing subreddits, requiring no API key.
+
+- :NewsSentimentService: is a server-side integration with the Finnhub company-news and news-sentiment endpoints that returns recent headlines and a bullish/bearish percentage split, requiring a Finnhub API key.
+
+- :FootTrafficService: is a server-side integration that fetches Google Maps Popular Times busyness scores (0 to 100) for a fixed set of real Place IDs per :Stock: representing headquarters, retail, or fulfilment locations, requiring a Google Maps API key.
+
+- :SatelliteService: is a server-side integration with the Sentinel Hub Statistical API (ESA Copernicus Data Space Ecosystem) that computes NDVI and NDBI change between the most recent 30-day window and the prior 30-day window over fixed facility bounding-box coordinates per :Stock:, requiring a Sentinel Hub OAuth client ID and secret.
+
+- :ReasoningService: is a server-side integration with the Anthropic Messages API using the claude-sonnet-4-6 model, streamed via server-sent events, used to generate the :RevealScreen: explanation and the :EdgeScreen: per-stock analysis from the live signal data.
+
+- :ConvictionAgent: is an agentic step within :EdgeScreen:'s analysis request, implemented as a separate, non-streamed call to :ReasoningService: that is forced to invoke a single tool named "set_conviction" rather than producing free-text output. :ConvictionAgent: is given the raw values of all seven :SignalSources: for the selected :Stock: and must decide, without any hardcoded threshold logic supplied by :App:, a conviction level of "high", "moderate", "low", or "insufficient_data", how many of the live signals agree with each other, how many signals returned usable live data at all, which one to three signals it weighted most heavily, and a one-sentence justification referencing specific signal values. :ConvictionAgent: must classify conviction as "insufficient_data" whenever fewer than three of the seven signals returned live data, regardless of the direction those signals point.
+
+- :ConvictionResult: is the structured output of :ConvictionAgent:, sent to the client as the first server-sent event in the :EdgeScreen: analysis stream, before the streamed prose synthesis begins, so that a conviction badge can render ahead of the full written analysis.
+
+***implementation reqs***
+
+- :MainExecutableFile: of :App: should be the Next.js App Router entry at "src/app/page.tsx".
+- :App: should be implemented in TypeScript using the Next.js 14 App Router.
+- All seven integrations in :SignalSources: should be implemented as Next.js API routes under "src/app/api/" and called from the client only through those routes, never directly from the browser.
+- :GameScreen: should fetch all six :GameStartPrice: values in a single batched API call rather than six sequential calls.
+- If :LiveQuoteService: fails for any :Stock:, :GameStartPrice: for that :Stock: should fall back to its hardcoded reference price without interrupting :App:.
+- Buy and sell controls in :GameScreen: should use solid, opaque background colors that are visually distinct from the dark page background in their default unhovered state, not translucent overlays.
+- Every external API key used by :SignalSources: should be read from environment variables and never hardcoded in source files.
+- If any individual signal in :SignalSources: is unavailable due to a missing API key or failed request, :EdgeScreen: should display a clear "setup needed" state for that signal rather than blocking the rest of the screen.
+- :ConvictionAgent: should use Anthropic's forced tool-choice mode so the model cannot return free text instead of a structured :ConvictionResult:, and its call should run independently of and prior to the streamed prose synthesis, not be inferred after the fact from the synthesis text.
+- If :ConvictionAgent: fails or times out, :EdgeScreen: should continue to render the streamed prose synthesis without a conviction badge rather than blocking the rest of the analysis.
+
+***test reqs***
+
+- :GameScreen: should be tested to confirm the 90-second timer reaches zero and triggers exactly one :GameResult:.
+- :PriceSimulation: should be tested to confirm the final simulated price of each :Stock: converges to :GameStartPrice: multiplied by one plus that :Stock:'s actual earnings result.
+- :GameResult:'s hedge fund profit-or-loss calculation should be tested to confirm it is strictly positive for every :Stock: with alternative-data direction "bull" or "bear", and zero for "neut".
+- Each API route backing :SignalSources: should be tested to confirm it returns a graceful fallback response, not a 500 error, when its required API key is absent.
+- :ConvictionAgent: should be tested to confirm it returns "insufficient_data" as the conviction level whenever fewer than three signals are live, even when the available signals strongly agree.
+
+***functional specs***
+
+- Display :TitleScreen: explaining that all six stocks are analyst-rated Buy and that a hedge fund has alternative data the user cannot see.
+
+- Start :GameScreen: when the user clicks the start button on :TitleScreen:.
+
+  ***acceptance tests***
+  - :GameScreen: should display six selectable stock tabs corresponding to :StockUniverse:.
+  - :GameScreen: should display a visible countdown timer starting at 90 seconds.
+
+- Fetch :GameStartPrice: for every :Stock: in :StockUniverse: from :LiveQuoteService: when :GameScreen: first loads, before the trading timer starts.
+
+  ***acceptance tests***
+  - :GameScreen: should show a loading state while :GameStartPrice: values are being fetched.
+  - :GameScreen: should display how many of the six prices were successfully fetched live versus fallback.
+
+- Allow the user to buy or sell shares of the currently selected :Stock: in :GameScreen:, updating cash balance and holdings immediately.
+
+  ***acceptance tests***
+  - Attempting to buy more shares than available cash allows should be rejected with a message in :TradeLog:.
+  - Attempting to sell more shares than currently held should be rejected with a message in :TradeLog:.
+  - Every successful trade should append an entry to :TradeLog: with a timestamp.
+
+- Produce :GameResult: and transition to :RevealScreen: when the :GameScreen: timer reaches zero.
+
+  ***acceptance tests***
+  - :RevealScreen: should display the user's final P&L, the hedge fund's P&L, and the dollar data advantage between them.
+  - :RevealScreen: should display a comparison table with one row per :Stock: in :StockUniverse:.
+
+- Stream a natural-language explanation from :ReasoningService: on :RevealScreen: describing why the hedge fund outperformed the user.
+
+  ***acceptance tests***
+  - The explanation text should render incrementally as it streams rather than appearing all at once.
+  - If :ReasoningService: fails, :RevealScreen: should display a static fallback explanation instead of an empty panel.
+
+- Transition from :RevealScreen: to :EdgeScreen: when the user clicks the "Get the same data they had" button.
+
+- Allow the user to select any :Stock: from :StockUniverse: on :EdgeScreen: and display all seven signals from :SignalSources: for that :Stock:.
+
+  ***acceptance tests***
+  - Switching the selected :Stock: on :EdgeScreen: should trigger a fresh fetch of all seven signals for the newly selected :Stock:.
+  - Each signal card should display its data source name and whether it is free or requires a paid tier.
+
+- Run :ConvictionAgent: against the seven live signals for the selected :Stock: and display its :ConvictionResult: as a badge before the streamed synthesis text appears.
+
+  ***acceptance tests***
+  - The conviction badge should display one of "high", "moderate", "low", or "insufficient data" with the count of agreeing signals out of total live signals.
+  - The conviction badge should display the one to three signal names :ConvictionAgent: weighted most heavily.
+  - If :ConvictionAgent: returns no result, :EdgeScreen: should still render the rest of the page without an error.
+
+- Stream a natural-language synthesis from :ReasoningService: on :EdgeScreen: combining all seven live signal values for the selected :Stock:.
+
+  ***acceptance tests***
+  - The synthesis should reference at least the satellite and foot traffic signals by name when both are available.
+
+- Display a $29-per-month subscription pricing strip at the bottom of :EdgeScreen:.
