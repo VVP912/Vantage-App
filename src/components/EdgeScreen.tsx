@@ -456,9 +456,9 @@ export default function EdgeScreen({ onReplay }: Props) {
                 <div key={i} style={{ paddingBottom: 8, marginBottom: 8, borderBottom: i < sat.facilities!.length - 1 ? '0.5px solid var(--hairline)' : 'none' }}>
                   <div style={{ fontSize: 11, fontWeight: 500, color: 'var(--text-primary)' }}>{f.name}</div>
                   <div style={{ fontSize: 10, color: f.satelliteData?.direction === 'elevated' ? 'var(--bull)' : f.satelliteData?.direction === 'reduced' ? 'var(--bear)' : 'var(--text-secondary)', marginTop: 2 }}>
-                    Activity {f.satelliteData?.direction} · score {f.satelliteData?.activityScore > 0 ? '+' : ''}{f.satelliteData?.activityScore?.toFixed(1)}
+                    Activity {f.satelliteData?.direction} · score {(f.satelliteData?.activityScore ?? 0) > 0 ? '+' : ''}{f.satelliteData?.activityScore?.toFixed(1)}
                   </div>
-                  <div style={{ fontSize: 10, color: 'var(--text-secondary)', marginTop: 2, lineHeight: 1.4 }}>{f.interpretation}</div>
+                  <div style={{ fontSize: 10, color: 'var(--text-secondary)', marginTop: 2, lineHeight: 1.4 }}>{f.satelliteData?.interpretation}</div>
                 </div>
               ))}
             </div>
