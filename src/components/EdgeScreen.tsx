@@ -177,6 +177,7 @@ export default function EdgeScreen({ onReplay }: Props) {
     } finally {
       setOnchainLoading(false)
     }
+  }
 
   const runAnalysis = async (sym: string, data?: AllSignalData) => {
     const d = data || signals[sym]
