@@ -340,7 +340,7 @@ export default function EdgeScreen({ onReplay }: Props) {
                 {badge(sat?.available ? (satDir === 'elevated' ? 'Active' : satDir === 'reduced' ? 'Quiet' : 'Stable') : 'Setup needed', satDir === 'elevated' ? 'var(--bull)' : satDir === 'reduced' ? 'var(--bear)' : 'var(--neutral)', satDir === 'elevated' ? 'var(--bull-dim)' : satDir === 'reduced' ? 'var(--bear-dim)' : 'var(--neutral-dim)')}
               </div>
               <div style={{ fontSize: 20, fontWeight: 500, color: 'var(--text-primary)', fontFamily: 'Courier New, monospace' }}>
-                {sat?.available ? `${sat.aggregateActivityScore > 0 ? '+' : ''}${sat.aggregateActivityScore?.toFixed(1)} score` : 'Needs setup'}
+                {sat?.available ? `${(sat.aggregateActivityScore ?? 0) > 0 ? '+' : ''}${sat.aggregateActivityScore?.toFixed(1)} score` : 'Needs setup'}
               </div>
               <div style={{ fontSize: 10, color: 'var(--text-secondary)', marginTop: 3, lineHeight: 1.4 }}>
                 {sat?.available ? sat.aggregateInterpretation?.substring(0, 100) + '...' : 'Add SENTINEL_HUB credentials to enable ESA Sentinel-2 NDVI/NDBI analysis'}
