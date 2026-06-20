@@ -151,19 +151,11 @@ ${convictionBlock}
 
 ALTERNATIVE DATA DIRECTION (from demo game scenario): ${altDataDir === 'bull' ? 'BULLISH' : altDataDir === 'bear' ? 'BEARISH' : 'NEUTRAL'}
 
-Write 3 tight paragraphs, plain text, no headers, no bullets, no markdown.
-
-Para 1: What signals 2-8 together tell you about ${symbol}'s operational reality right now. Be concrete about what each real signal means. Note which signals are genuinely from live data. The foot traffic and satellite signals are the most like what hedge funds pay millions for — emphasise these. The crypto macro signal (8) is market-wide context, not stock-specific — mention it only briefly as background risk appetite, don't treat it as primary evidence about ${symbol} itself.
-
-Para 2: Where the data aligns with or diverges from analyst consensus. The retail investor only sees analyst notes and news. What are they missing from these alternative signals?
-
-Para 3: State the conviction level from the conviction agent assessment above and what a hedge fund analyst would do with this combination of signals. Explain what VANTAGE is democratising by making these signals available for $29/month vs the $2-5M/year institutions pay.
-
-Quantitative, analyst-register. Direct. No financial disclaimers.`
+Write ONE tight paragraph, max 70 words, plain text, no headers, no bullets, no markdown. State what the satellite and foot traffic signals (the hardest for retail to access elsewhere) show, whether that aligns with or diverges from analyst consensus, and the conviction level. Quantitative, analyst-register, no filler, no disclaimers.`
 
   const stream = await anthropic.messages.stream({
     model: 'claude-sonnet-4-6',
-    max_tokens: 450,
+    max_tokens: 150,
     messages: [{ role: 'user', content: prompt }],
   })
 

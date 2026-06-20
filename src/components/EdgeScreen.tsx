@@ -286,7 +286,7 @@ export default function EdgeScreen({ onReplay }: Props) {
           <div style={{ width: 30, height: 30, background: 'var(--bg-void)', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 500, color: 'var(--bull)', fontFamily: 'Courier New, monospace' }}>V</div>
           <div style={{ fontSize: 18, fontWeight: 500, color: 'var(--text-primary)' }}>VANTAGE</div>
         </div>
-        <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 3 }}>Alternative data intelligence. 7 real signals. Updated live.</div>
+        <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 3 }}>8 live alt-data signals.</div>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginTop: 8 }}>
           {['Yahoo Finance', 'Finnhub', 'SEC EDGAR', 'ApeWisdom', 'Google Maps', 'ESA Sentinel-2'].map(s => (
             <span key={s} style={{ fontSize: 9, padding: '2px 7px', borderRadius: 20, background: 'var(--bull-dim)', color: 'var(--bull)', fontWeight: 500 }}>{s}</span>
@@ -326,10 +326,10 @@ export default function EdgeScreen({ onReplay }: Props) {
       )}
 
       {loading ? (
-        <div style={{ textAlign: 'center', padding: '32px 0', color: 'var(--text-tertiary)', fontSize: 13 }}>Fetching 7 live data sources...</div>
+        <div style={{ textAlign: 'center', padding: '32px 0', color: 'var(--text-tertiary)', fontSize: 13 }}>Fetching live data...</div>
       ) : (
         <>
-          <div style={{ fontSize: 10, fontWeight: 500, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10 }}>7 alternative data signals</div>
+          <div style={{ fontSize: 10, fontWeight: 500, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10 }}>8 alt-data signals</div>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 14 }}>
 
@@ -343,10 +343,9 @@ export default function EdgeScreen({ onReplay }: Props) {
                 {sat?.available ? `${(sat.aggregateActivityScore ?? 0) > 0 ? '+' : ''}${sat.aggregateActivityScore?.toFixed(1)} score` : 'Needs setup'}
               </div>
               <div style={{ fontSize: 10, color: 'var(--text-secondary)', marginTop: 3, lineHeight: 1.4 }}>
-                {sat?.available ? sat.aggregateInterpretation?.substring(0, 100) + '...' : 'Add SENTINEL_HUB credentials to enable ESA Sentinel-2 NDVI/NDBI analysis'}
+                {sat?.available ? sat.aggregateInterpretation?.substring(0, 60) + '...' : 'Needs SENTINEL_HUB credentials'}
               </div>
               {sourcePill('ESA Sentinel-2 via Copernicus CDSE · free', true)}
-              <div style={{ fontSize: 9, color: 'var(--text-tertiary)', marginTop: 2 }}>Hedge funds pay: Planet Labs $500k+/yr</div>
             </>, 'sat')}
 
             {/* 2. Foot traffic */}
@@ -359,10 +358,9 @@ export default function EdgeScreen({ onReplay }: Props) {
                 {foot?.aggregateScore !== null && foot?.aggregateScore !== undefined ? `${foot.aggregateScore}/100` : 'Needs setup'}
               </div>
               <div style={{ fontSize: 10, color: 'var(--text-secondary)', marginTop: 3, lineHeight: 1.4 }}>
-                {foot?.aggregateInterpretation?.substring(0, 100) || 'Add GOOGLE_MAPS_API_KEY to enable real-time location busyness'}
+                {foot?.aggregateInterpretation?.substring(0, 60) || 'Needs GOOGLE_MAPS_API_KEY'}
               </div>
               {sourcePill('Google Maps Popular Times · real opted-in location data', true)}
-              <div style={{ fontSize: 9, color: 'var(--text-tertiary)', marginTop: 2 }}>Hedge funds pay: SafeGraph/Placer.ai $200k+/yr</div>
             </>, 'foot')}
 
             {/* 3. Insider sentiment */}
@@ -446,45 +444,6 @@ export default function EdgeScreen({ onReplay }: Props) {
 
           </div>
 
-          {/* Satellite facility detail */}
-          {sat?.available && sat?.facilities && sat.facilities.filter(f => f.satelliteData).length > 0 && (
-            <div style={{ background: 'var(--bg-inset)', borderRadius: 10, padding: 12, marginBottom: 14 }}>
-              <div style={{ fontSize: 10, fontWeight: 500, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>
-                Satellite detail — ESA Sentinel-2 facility analysis
-              </div>
-              {sat.facilities.filter(f => f.satelliteData).map((f, i) => (
-                <div key={i} style={{ paddingBottom: 8, marginBottom: 8, borderBottom: i < sat.facilities!.length - 1 ? '0.5px solid var(--hairline)' : 'none' }}>
-                  <div style={{ fontSize: 11, fontWeight: 500, color: 'var(--text-primary)' }}>{f.name}</div>
-                  <div style={{ fontSize: 10, color: f.satelliteData?.direction === 'elevated' ? 'var(--bull)' : f.satelliteData?.direction === 'reduced' ? 'var(--bear)' : 'var(--text-secondary)', marginTop: 2 }}>
-                    Activity {f.satelliteData?.direction} · score {(f.satelliteData?.activityScore ?? 0) > 0 ? '+' : ''}{f.satelliteData?.activityScore?.toFixed(1)}
-                  </div>
-                  <div style={{ fontSize: 10, color: 'var(--text-secondary)', marginTop: 2, lineHeight: 1.4 }}>{f.satelliteData?.interpretation}</div>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* Foot traffic detail */}
-          {foot?.locations && foot.locations.filter(l => l.currentBusyness !== null && l.currentBusyness !== undefined).length > 0 && (
-            <div style={{ background: 'var(--bg-inset)', borderRadius: 10, padding: 12, marginBottom: 14 }}>
-              <div style={{ fontSize: 10, fontWeight: 500, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>
-                Foot traffic detail — Google Maps Popular Times (live)
-              </div>
-              {foot.locations.filter(l => l.currentBusyness !== null && l.currentBusyness !== undefined).map((loc, i) => (
-                <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: 6, marginBottom: 6, borderBottom: '0.5px solid var(--hairline)' }}>
-                  <div>
-                    <div style={{ fontSize: 11, fontWeight: 500, color: 'var(--text-primary)' }}>{loc.name}</div>
-                    <div style={{ fontSize: 10, color: 'var(--text-tertiary)' }}>{loc.type?.replace('_', ' ')}</div>
-                  </div>
-                  <div style={{ textAlign: 'right' }}>
-                    <div style={{ fontSize: 16, fontWeight: 500, color: 'var(--text-primary)', fontFamily: 'Courier New, monospace' }}>{loc.currentBusyness}/100</div>
-                    <div style={{ fontSize: 10, color: 'var(--text-tertiary)' }}>{loc.signal}</div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-
           {/* Conviction agent — genuine agentic step: Claude calls a tool
               to commit to a structured conviction judgment based on how
               many live signals agree, before any prose is generated */}
@@ -498,7 +457,7 @@ export default function EdgeScreen({ onReplay }: Props) {
               </span>
             </div>
             {convictionLoading && !conviction ? (
-              <div style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>Claude is weighing the 7 live signals against each other...</div>
+              <div style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>Weighing live signals...</div>
             ) : conviction ? (
               <>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
@@ -510,19 +469,13 @@ export default function EdgeScreen({ onReplay }: Props) {
                     {conviction.convictionLevel.replace('_', ' ')} conviction
                   </span>
                   <span style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>
-                    {conviction.agreeingSignalCount}/{conviction.totalLiveSignals} live signals agree
+                    {conviction.agreeingSignalCount}/{conviction.totalLiveSignals} agree
                   </span>
                 </div>
-                <div style={{ fontSize: 11, color: 'var(--text-secondary)', lineHeight: 1.5, marginBottom: 6 }}>{conviction.reasoning}</div>
-                <div style={{ fontSize: 10, color: 'var(--text-tertiary)' }}>
-                  Weighted most: {conviction.primarySignals.join(', ')}
-                </div>
-                <div style={{ fontSize: 9, color: 'var(--text-tertiary)', marginTop: 6 }}>
-                  This judgment is made by a separate Claude tool-call that decides conviction from raw signal values — not a hardcoded threshold.
-                </div>
+                <div style={{ fontSize: 11, color: 'var(--text-secondary)', lineHeight: 1.5 }}>{conviction.reasoning}</div>
               </>
             ) : (
-              <div style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>Conviction assessment unavailable this request.</div>
+              <div style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>Unavailable this request.</div>
             )}
           </div>
 
@@ -568,9 +521,6 @@ export default function EdgeScreen({ onReplay }: Props) {
                     </div>
                   ))}
                 </div>
-                <div style={{ fontSize: 9, color: 'var(--text-tertiary)', lineHeight: 1.5, paddingTop: 6, borderTop: '0.5px solid var(--hairline)' }}>
-                  {prediction.prediction.overfittingCaveat}
-                </div>
               </>
             )}
           </div>
@@ -594,9 +544,8 @@ export default function EdgeScreen({ onReplay }: Props) {
               <div style={{ fontSize: 20, fontWeight: 500, fontFamily: 'Courier New, monospace', color: 'var(--text-primary)', marginBottom: 6 }}>
                 Max {prediction.risk.maxPositionSizePercent}% position
               </div>
-              <div style={{ fontSize: 11, color: 'var(--text-secondary)', lineHeight: 1.5, marginBottom: 8 }}>{prediction.risk.rationale}</div>
-              {prediction.risk.warnings.map((w, i) => (
-                <div key={i} style={{ fontSize: 10, color: 'var(--bear)', lineHeight: 1.5, marginBottom: 4, paddingLeft: 10, borderLeft: '2px solid var(--bear)' }}>{w}</div>
+              {prediction.risk.warnings.slice(0, 2).map((w, i) => (
+                <div key={i} style={{ fontSize: 10, color: 'var(--bear)', lineHeight: 1.4, marginBottom: 3, paddingLeft: 8, borderLeft: '2px solid var(--bear)' }}>{w}</div>
               ))}
             </div>
           )}
@@ -629,7 +578,7 @@ export default function EdgeScreen({ onReplay }: Props) {
             ) : (
               <>
                 <div style={{ fontSize: 11, color: 'var(--text-secondary)', lineHeight: 1.5, marginBottom: 8 }}>
-                  Record this conviction call on Polygon Amoy testnet before the earnings outcome is known — a tamper-proof, timestamped, publicly auditable prediction. Raw signal values are hashed, not published, so the record proves prior commitment without exposing data.
+                  Record this conviction call on-chain, timestamped before the outcome is known. Signal values are hashed, not published.
                 </div>
                 <button
                   onClick={logToChain}
@@ -645,28 +594,28 @@ export default function EdgeScreen({ onReplay }: Props) {
           {/* AI synthesis */}
           <div style={{ background: 'var(--bg-void)', borderRadius: 12, padding: 14, marginBottom: 14 }}>
             <div style={{ fontSize: 9, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.4)', marginBottom: 5 }}>
-              AI synthesis — 8 signals vs analyst consensus
+              vs analyst consensus
             </div>
-            <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--bg-panel)', lineHeight: 1.6, marginBottom: 8 }}>
-              {tk.altDataDir === 'bear'
-                ? `${tk.sym} analyst consensus: Buy. Alternative data across 7 sources: mixed-to-bearish. Retail investors following analyst notes alone are missing operational ground truth.`
-                : tk.altDataDir === 'bull'
-                ? `${tk.sym} alternative data confirms analyst consensus across multiple sources. High-conviction long with satellite, foot traffic, and insider data all aligned.`
-                : `${tk.sym} signals are mixed. Analyst consensus and alternative data neither strongly confirm nor contradict each other.`}
-            </div>
-            <div style={{ fontSize: 11, color: 'var(--bull)', fontFamily: 'Courier New, monospace' }}>
-              Satellite + foot traffic: most like institutional alt-data · Updated live
-            </div>
-            <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', marginTop: 3 }}>
-              Not financial advice. Signals are directional indicators only.
+            <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--bg-panel)', lineHeight: 1.5, marginBottom: 8 }}>
+              {(() => {
+                // Derive the headline from real live signal values, not a
+                // static per-stock label, so it genuinely differs by stock.
+                const signalsLive = [mspr !== undefined, satDir, footDir, news?.bullishPercent != null].filter(Boolean).length
+                const bullCount = [msprDir === 'bull', satDir === 'elevated', footDir === 'bull', (news?.bullishPercent ?? 0) > 0.6].filter(Boolean).length
+                const bearCount = [msprDir === 'bear', satDir === 'reduced', footDir === 'bear', (news?.bearishPercent ?? 0) > 0.5].filter(Boolean).length
+                if (signalsLive < 2) return `${tk.sym}: insufficient live signals yet.`
+                if (bullCount > bearCount) return `${tk.sym}: alt-data leans bullish, ${bullCount}/${signalsLive} live signals confirm.`
+                if (bearCount > bullCount) return `${tk.sym}: alt-data diverges from Buy rating — ${bearCount}/${signalsLive} live signals bearish.`
+                return `${tk.sym}: alt-data mixed, no strong lean either way.`
+              })()}
             </div>
           </div>
 
           {/* Streaming analysis */}
           <div style={{ background: 'var(--bg-inset)', borderRadius: 12, padding: 12, marginBottom: 14 }}>
-            <div style={{ fontSize: 10, fontWeight: 500, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>Full analysis — synthesising all 7 live signals</div>
-            <div style={{ fontSize: 12, color: 'var(--text-primary)', lineHeight: 1.8, fontFamily: 'Courier New, monospace', whiteSpace: 'pre-wrap' }}>
-              {analysisLoading && !analysis ? 'Generating analysis from 7 live data sources...' : analysis || 'Select a stock to generate analysis.'}
+            <div style={{ fontSize: 10, fontWeight: 500, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>Full analysis</div>
+            <div style={{ fontSize: 12, color: 'var(--text-primary)', lineHeight: 1.7, fontFamily: 'Courier New, monospace', whiteSpace: 'pre-wrap' }}>
+              {analysisLoading && !analysis ? 'Generating...' : analysis || 'Select a stock to generate analysis.'}
             </div>
           </div>
 
@@ -674,8 +623,8 @@ export default function EdgeScreen({ onReplay }: Props) {
           {news?.articles && news.articles.length > 0 && (
             <div style={{ background: 'var(--bg-panel)', border: '0.5px solid var(--hairline)', borderRadius: 12, padding: 12, marginBottom: 14 }}>
               <div style={{ fontSize: 10, fontWeight: 500, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>Recent news · Finnhub</div>
-              {news.articles.slice(0, 3).map((a, i) => (
-                <div key={i} style={{ paddingBottom: 8, marginBottom: 8, borderBottom: i < 2 ? '0.5px solid var(--hairline)' : 'none' }}>
+              {news.articles.slice(0, 2).map((a, i) => (
+                <div key={i} style={{ paddingBottom: 8, marginBottom: 8, borderBottom: i < 1 ? '0.5px solid var(--hairline)' : 'none' }}>
                   <div style={{ fontSize: 12, color: 'var(--text-primary)', fontWeight: 500, lineHeight: 1.4 }}>{a.headline}</div>
                   <div style={{ fontSize: 10, color: 'var(--text-tertiary)', marginTop: 3 }}>{a.source} · {a.datetime}</div>
                 </div>
@@ -709,8 +658,7 @@ export default function EdgeScreen({ onReplay }: Props) {
       <div style={{ background: 'var(--bg-inset)', borderRadius: 12, padding: 12, marginBottom: 12, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
         <div>
           <div style={{ fontSize: 22, fontWeight: 500, color: 'var(--text-primary)' }}>$29<span style={{ fontSize: 13, fontWeight: 400, color: 'var(--text-tertiary)' }}>/month</span></div>
-          <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 2 }}>8 signals · 50 stocks · Weekly updates · Full AI synthesis</div>
-          <div style={{ fontSize: 10, color: 'var(--bull)', marginTop: 2 }}>Hedge funds pay $2-5M/year for the same data</div>
+          <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 2 }}>8 signals · 50 stocks · Weekly updates</div>
         </div>
         <button style={{ padding: '9px 18px', background: 'var(--bg-void)', color: 'var(--bg-panel)', border: 'none', borderRadius: 6, fontSize: 11, fontWeight: 500, cursor: 'pointer', whiteSpace: 'nowrap', fontFamily: 'Courier New, monospace' }}>
           Start free trial
