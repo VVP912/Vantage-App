@@ -15,6 +15,7 @@ export const STOCKS = [
     result: -0.14,
     resultNote: 'MISS — EPS $4.82 vs $5.58 est. Stock -14%.',
     hedgeAction: 'Shorted based on satellite car park data and job posting velocity down 34% YoY.',
+    satelliteSignal: 'Gigafactory-equivalent fab car parks down 19% vs prior quarter — pointed to softer near-term shipments.',
     // Search terms for Google Trends proxy via news volume
     searchTerms: ['NVIDIA GPU', 'CUDA', 'data center AI'],
   },
@@ -32,6 +33,7 @@ export const STOCKS = [
     result: 0.08,
     resultNote: 'BEAT — EPS $1.61 vs $1.46 est. Stock +8%.',
     hedgeAction: 'Went long — CC spend data confirmed analyst consensus. High conviction.',
+    satelliteSignal: 'Foxconn assembly facility activity up 11% QoQ — consistent with strong iPhone 16 production ramp.',
     searchTerms: ['iPhone', 'Apple Store', 'iOS'],
   },
   {
@@ -48,6 +50,7 @@ export const STOCKS = [
     result: -0.11,
     resultNote: 'MISS — EPS $0.58 vs $0.72 est. Stock -11%.',
     hedgeAction: 'Shorted — job posting velocity down 42% YoY signals headcount freeze and slowing ramp.',
+    satelliteSignal: 'Gigafactory Texas and Fremont car park density down 16% YoY — flagged a slowing production ramp ahead of earnings.',
     searchTerms: ['Tesla Model 3', 'Tesla delivery', 'Cybertruck'],
   },
   {
@@ -64,6 +67,7 @@ export const STOCKS = [
     result: 0.12,
     resultNote: 'BEAT — EPS $5.71 vs $5.12 est. Stock +12%.',
     hedgeAction: 'Went long — CC spend on Meta advertising surged 22% MoM. Data confirmed bull case.',
+    satelliteSignal: 'Menlo Park and data centre construction activity up 14% QoQ — consistent with continued infrastructure investment and growth confidence.',
     searchTerms: ['Facebook ads', 'Instagram', 'Meta Quest'],
   },
   {
@@ -80,6 +84,7 @@ export const STOCKS = [
     result: 0.03,
     resultNote: 'INLINE — EPS $4.26 vs $4.18 est. Stock +3%.',
     hedgeAction: 'Held neutral — alt data mixed. No strong directional signal. Avoided the name.',
+    satelliteSignal: 'Headquarters and branch parking activity roughly flat QoQ — no directional signal either way.',
     searchTerms: ['JPMorgan banking', 'Chase bank', 'investment banking'],
   },
   {
@@ -96,6 +101,7 @@ export const STOCKS = [
     result: 0.09,
     resultNote: 'BEAT — EPS $1.19 vs $1.03 est. Stock +9%.',
     hedgeAction: 'Went long — shipping volumes +31% vs estimate. AWS hiring up 28% YoY.',
+    satelliteSignal: 'Fulfillment centre car park and loading dock activity up 21% QoQ — pointed to strong shipping volume ahead of earnings.',
     searchTerms: ['Amazon Prime', 'AWS cloud', 'Amazon delivery'],
   },
 ]

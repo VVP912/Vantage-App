@@ -146,35 +146,31 @@ async function getFacilityActivity(
 function setup() {
   return {
     input: [{
-      bands: ["B04", "B08", "B11", "SCL"],
-      units: ["REFLECTANCE", "REFLECTANCE", "REFLECTANCE", "DN"]
+      bands: ["B04", "B08", "B11", "SCL", "dataMask"],
+      units: ["REFLECTANCE", "REFLECTANCE", "REFLECTANCE", "DN", "DN"]
     }],
     output: [
       { id: "ndvi", bands: 1 },
-      { id: "ndbi", bands: 1 }
-    ],
-    mosaicking: "ORBIT"
+      { id: "ndbi", bands: 1 },
+      { id: "dataMask", bands: 1 }
+    ]
   };
 }
 
-function filterScenes(availableScenes) {
-  return availableScenes.filter(scene => {
-    return scene.snow === false;
-  });
-}
-
 function evaluatePixel(samples) {
-  // Filter cloudy pixels using Scene Classification Layer
-  if (samples.SCL === 3 || samples.SCL === 8 || samples.SCL === 9 || samples.SCL === 10) {
-    return { ndvi: [NaN], ndbi: [NaN] };
-  }
-  
+  // Exclude cloudy / snow / cloud-shadow pixels (via SCL) and nodata
+  // pixels (via dataMask) from the statistics, as required by the
+  // Statistical API's dataMask convention.
+  const isCloudOrSnow = samples.SCL === 3 || samples.SCL === 8 || samples.SCL === 9 || samples.SCL === 10 || samples.SCL === 11
+  const validMask = samples.dataMask * (isCloudOrSnow ? 0 : 1)
+
   const ndvi = (samples.B08 - samples.B04) / (samples.B08 + samples.B04 + 0.0001);
   const ndbi = (samples.B11 - samples.B08) / (samples.B11 + samples.B08 + 0.0001);
-  
+
   return {
     ndvi: [ndvi],
-    ndbi: [ndbi]
+    ndbi: [ndbi],
+    dataMask: [validMask]
   };
 }
 `
@@ -339,13 +335,13 @@ export async function GET(req: NextRequest) {
     config.facilities.map(async (facility) => {
       const satelliteData = await getFacilityActivity(facility.bbox, token, facility.name)
       const debugError = (satelliteData as { __debugError?: string } | null)?.__debugError
+      if (debugError) console.error(`Satellite error for ${facility.name}: ${debugError}`)
       return {
         name: facility.name,
         type: facility.type,
-        debugError,
         interpretation: facility.interpretation,
         coordinates: facility.bbox,
-        satelliteData,
+        satelliteData: debugError ? null : satelliteData,
         dataAvailable: satelliteData !== null && !debugError,
       }
     })
