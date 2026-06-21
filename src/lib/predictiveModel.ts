@@ -82,8 +82,8 @@ function normaliseSignal(key: keyof SignalInputs, value: number | string | null)
       // "increased attention" signal, not a directional one. The real
       // direction for insider activity comes from insiderMspr instead,
       // which IS directional (derived from actual buy/sell transactions).
-      if (value === 'High') return 0.15
-      if (value === 'Moderate') return 0.05
+      if (value === 'High') return 0.22
+      if (value === 'Moderate') return 0.10
       return 0
     case 'redditMentionChange':
       // percentage change, clamp to +/-100% then normalise

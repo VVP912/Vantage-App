@@ -9,14 +9,27 @@ export async function POST(req: NextRequest) {
     footTrafficData, satelliteData
   } = body
 
-  // Fetch the Bybit macro signal server-side so the predictive model
-  // always has the freshest reading, independent of whatever the
-  // client already cached for the signal cards.
+  // Fetch the crypto macro signal directly from CoinGecko rather than
+  // self-fetching our own /api/crypto-sentiment route — internal
+  // serverless-to-serverless calls can be flaky (cold starts, internal
+  // routing), and a failure here was silently dropping this signal
+  // from the live count with no visibility.
   let cryptoMacroScore: number | null = null
   try {
-    const cryptoRes = await fetch(`${req.nextUrl.origin}/api/crypto-sentiment`)
-    const cryptoData = await cryptoRes.json()
-    cryptoMacroScore = cryptoData?.available ? cryptoData.macroScore : null
+    const cryptoRes = await fetch(
+      'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum&vs_currencies=usd&include_24hr_change=true',
+      { headers: { Accept: 'application/json' } }
+    )
+    if (cryptoRes.ok) {
+      const prices = await cryptoRes.json()
+      const changes: number[] = []
+      if (prices?.bitcoin?.usd_24h_change != null) changes.push(prices.bitcoin.usd_24h_change)
+      if (prices?.ethereum?.usd_24h_change != null) changes.push(prices.ethereum.usd_24h_change)
+      if (changes.length > 0) {
+        const avgChange = changes.reduce((s, c) => s + c, 0) / changes.length
+        cryptoMacroScore = Math.max(-1, Math.min(1, avgChange / 10))
+      }
+    }
   } catch {
     cryptoMacroScore = null
   }
