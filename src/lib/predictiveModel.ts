@@ -77,13 +77,13 @@ function normaliseSignal(key: keyof SignalInputs, value: number | string | null)
       // EDGAR Form 4 velocity is a COUNT of filing activity with no
       // buy/sell direction encoded — it cannot tell us whether insiders
       // are buying or selling, only that something unusual is happening.
-      // We deliberately do not treat high velocity as bullish or bearish
-      // on its own; it nudges the composite score only slightly, as an
-      // "increased attention" signal, not a directional one. The real
-      // direction for insider activity comes from insiderMspr instead,
-      // which IS directional (derived from actual buy/sell transactions).
-      if (value === 'High') return 0.22
-      if (value === 'Moderate') return 0.10
+      // It must never cast a directional (bull/bear) vote on its own,
+      // since "more filings" is not inherently good or bad news. We
+      // return 0 here regardless of velocity level — the actual
+      // direction for insider activity comes entirely from insiderMspr
+      // (derived from real buy/sell transaction data). High velocity is
+      // still surfaced to the user as a flag worth noting, just not as
+      // a vote in the composite score or majority count.
       return 0
     case 'redditMentionChange':
       // percentage change, clamp to +/-100% then normalise
@@ -148,42 +148,46 @@ export function runPredictiveModel(inputs: SignalInputs): PredictionResult {
 
   compositeScore = parseFloat(compositeScore.toFixed(4))
 
-  // Majority-vote check: count how many live signals individually lean
-  // bullish vs bearish (normalisedScore beyond a small dead-zone). If a
-  // clear majority of live signals agree on a direction, that drives
-  // the call directly — this is what "the hedge fund had conviction"
-  // actually means in practice: most of the data points one way, even
-  // if a couple of outliers pull the weighted average closer to zero.
+  // Directional vote count: only signals that actually lean a direction
+  // count toward agreement/disagreement. A signal sitting at neutral
+  // (e.g. crypto macro reading +0.07, well inside the dead-zone) isn't
+  // evidence either way, so it's excluded from the vote entirely rather
+  // than diluting the count. This matches how an analyst actually reads
+  // a data set: "6 signals are live, 1 is flat/uninformative, 5 have a
+  // real lean, 4 of those 5 agree" — not "4 out of 6 means weak".
   const liveBreakdown = signalBreakdown.filter(s => s.rawValue !== null && s.rawValue !== undefined)
   const bullVotes = liveBreakdown.filter(s => s.normalisedScore > 0.08).length
   const bearVotes = liveBreakdown.filter(s => s.normalisedScore < -0.08).length
-  const majorityThreshold = 3
+  const directionalVotes = bullVotes + bearVotes
+
+  // Decisive whenever one side has more directional votes than the
+  // other. A genuine split (equal bull/bear votes, both present) is the
+  // only case treated as a real conflict — that's an actual disagreement
+  // in the data, not just "not every signal chimed in".
+  const isSplit = bullVotes > 0 && bearVotes > 0 && bullVotes === bearVotes
 
   let predictedDirection: PredictionResult['predictedDirection']
-  if (bullVotes >= majorityThreshold && bullVotes > bearVotes) {
-    predictedDirection = 'bullish'
-  } else if (bearVotes >= majorityThreshold && bearVotes > bullVotes) {
-    predictedDirection = 'bearish'
-  } else {
+  if (isSplit || directionalVotes === 0) {
     predictedDirection = compositeScore > 0.04 ? 'bullish' : compositeScore < -0.04 ? 'bearish' : 'neutral'
+  } else if (bullVotes > bearVotes) {
+    predictedDirection = 'bullish'
+  } else {
+    predictedDirection = 'bearish'
   }
 
-  const hasMajorityConsensus = (bullVotes >= majorityThreshold && bullVotes > bearVotes) ||
-    (bearVotes >= majorityThreshold && bearVotes > bullVotes)
+  const hasDirectionalConsensus = !isSplit && directionalVotes > 0
 
-  // Confidence band: with foot traffic now marked N/A for this sector
-  // (not a failure, a deliberate scope decision — see foottraffic
-  // route) and satellite using point-in-time facility data, 2 live
-  // signals is a meaningful floor for this 7-signal model, not 3.
-  // A clear majority-vote consensus (3+ signals agreeing) is treated
-  // as at least moderate confidence even if the weighted composite
-  // score is muted by one or two outlier signals.
+  // Confidence band: with foot traffic marked N/A for this sector (not
+  // a failure, a deliberate scope decision — see foottraffic route),
+  // 2 live signals is a meaningful floor for this 7-signal model.
+  // Directional consensus among 4+ agreeing signals is high confidence;
+  // 2-3 agreeing is moderate; a genuine split is always low.
   let confidenceBand: PredictionResult['confidenceBand']
   if (liveSignalCount < 2) {
     confidenceBand = 'insufficient_data'
-  } else if (hasMajorityConsensus && Math.max(bullVotes, bearVotes) >= 4) {
+  } else if (hasDirectionalConsensus && Math.max(bullVotes, bearVotes) >= 4) {
     confidenceBand = 'high'
-  } else if (hasMajorityConsensus || (Math.abs(compositeScore) > 0.18 && liveSignalCount >= 4)) {
+  } else if (hasDirectionalConsensus && Math.max(bullVotes, bearVotes) >= 2) {
     confidenceBand = 'moderate'
   } else if (Math.abs(compositeScore) > 0.08) {
     confidenceBand = 'moderate'

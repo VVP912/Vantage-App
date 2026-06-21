@@ -48,32 +48,18 @@ export function assessRisk(prediction: PredictionResult): RiskAssessment {
     }
   }
 
-  // Circuit breaker: check for internal disagreement among the signals
-  // that contributed meaningfully (|contribution| > 0.02). If a
-  // significant share of signals point in opposite directions to the
-  // composite, that is a conflict signal, not a confident read.
-  const meaningfulSignals = prediction.signalBreakdown.filter(
-    (s) => Math.abs(s.contribution) > 0.02
-  )
-  const positiveCount = meaningfulSignals.filter((s) => s.normalisedScore > 0.1).length
-  const negativeCount = meaningfulSignals.filter((s) => s.normalisedScore < -0.1).length
-  const isConflicted = positiveCount > 0 && negativeCount > 0 &&
-    Math.min(positiveCount, negativeCount) / Math.max(positiveCount, negativeCount, 1) > 0.6 &&
-    Math.max(positiveCount, negativeCount) < 3
+  // Note: directional conflict detection now lives entirely in
+  // predictiveModel.ts's vote-counting logic — predictedDirection is
+  // only 'neutral' when there's a genuine split (equal bull/bear votes)
+  // or no signal leans either way. We trust that single source of truth
+  // here rather than re-deriving disagreement with a separate threshold,
+  // which previously caused the two checks to disagree with each other.
 
-  if (isConflicted) {
-    warnings.push(
-      `Signals disagree: ${positiveCount} point bullish, ${negativeCount} point bearish among meaningful contributors. Composite direction is not a confident consensus.`
-    )
-  }
-
-  if (prediction.predictedDirection === 'neutral' || isConflicted) {
+  if (prediction.predictedDirection === 'neutral') {
     return {
       recommendedAction: 'no_position',
       maxPositionSizePercent: 0,
-      rationale: isConflicted
-        ? 'Signals meaningfully disagree with each other. The model explicitly avoids forcing a directional call when inputs conflict — this is the circuit breaker, not a bug.'
-        : 'Composite score is too close to neutral to support a directional view.',
+      rationale: 'Signals are genuinely split or show no clear directional lean — the model avoids forcing a call when the data doesn\'t support one.',
       warnings,
     }
   }
