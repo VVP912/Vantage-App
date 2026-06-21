@@ -169,9 +169,20 @@ export default function GameScreen({ onReveal }: Props) {
         prev.map((p, i) => {
           const s = STOCKS[i]
           const base = startPricesRef.current[s.sym] ?? s.basePrice
-          const move = (Math.random() - 0.5) * s.vol * p.cur
-          const drift = (s.result / GAME_SECS) * p.cur * 0.2
-          const cur = Math.max(p.cur + move + drift, 1)
+          const trueFinal = base * (1 + s.result)
+          const secondsElapsed = GAME_SECS - timeRef.current
+          // Convergence factor: 0 at game start, 1 at game end. Random
+          // noise shrinks and pull toward the true final price grows
+          // as the timer runs down, so by the closing seconds the live
+          // price a player sees is genuinely close to what they're
+          // actually paid out on, rather than a random walk that could
+          // be sitting far from the scripted result right up until the
+          // final instant it snaps to the true value.
+          const convergence = Math.min(1, secondsElapsed / GAME_SECS)
+          const noiseScale = 1 - convergence * 0.85
+          const move = (Math.random() - 0.5) * s.vol * p.cur * noiseScale
+          const pullToFinal = (trueFinal - p.cur) * (convergence * 0.18)
+          const cur = Math.max(p.cur + move + pullToFinal, 1)
           return {
             sym: p.sym,
             cur: parseFloat(cur.toFixed(2)),
