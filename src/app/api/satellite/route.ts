@@ -143,10 +143,10 @@ async function getFacilityActivity(
 //VERSION=3
 function setup() {
   return {
-    input: [{
-      bands: ["B04", "B08", "B11", "SCL"],
-      units: "REFLECTANCE"
-    }],
+    input: [
+      { bands: ["B04", "B08", "B11"], units: "REFLECTANCE" },
+      { bands: ["SCL"], units: "DN" }
+    ],
     output: [
       { id: "ndvi", bands: 1 },
       { id: "ndbi", bands: 1 }
@@ -177,6 +177,23 @@ function evaluatePixel(samples) {
 }
 `
 
+  // bbox is in WGS84 degrees (CRS84), but Sentinel Hub's resx/resy
+  // parameters expect meters — mixing those caused Sentinel Hub to
+  // compute pixel size against the bbox's raw degree-width, producing
+  // a wildly inflated meters-per-pixel figure and a 400 error. Instead
+  // we compute the bbox's real width/height in meters and request a
+  // pixel grid (width/height) directly, which works correctly
+  // regardless of the bbox's coordinate system.
+  const [west, south, east, north] = bbox
+  const latMid = (south + north) / 2
+  const metersPerDegLat = 111320
+  const metersPerDegLon = 111320 * Math.cos((latMid * Math.PI) / 180)
+  const widthMeters = (east - west) * metersPerDegLon
+  const heightMeters = (north - south) * metersPerDegLat
+  const targetResM = 10
+  const pixelWidth = Math.max(1, Math.min(2500, Math.round(widthMeters / targetResM)))
+  const pixelHeight = Math.max(1, Math.min(2500, Math.round(heightMeters / targetResM)))
+
   const makeRequest = async (fromDate: string, toDate: string) => {
     const body = {
       input: {
@@ -196,8 +213,8 @@ function evaluatePixel(samples) {
         timeRange: { from: `${fromDate}T00:00:00Z`, to: `${toDate}T23:59:59Z` },
         aggregationInterval: { of: 'P30D' },
         evalscript,
-        resx: 10,
-        resy: 10,
+        width: pixelWidth,
+        height: pixelHeight,
       },
       calculations: {
         ndvi: { histograms: { default: { nBins: 20, lowEdge: -1.0, highEdge: 1.0 } }, statistics: { default: { percentiles: { k: [25, 50, 75] } } } },
