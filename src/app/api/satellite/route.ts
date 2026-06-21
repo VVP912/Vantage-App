@@ -250,7 +250,11 @@ function evaluatePixel(samples) {
   const recent = getStats(recentData)
   const prior = getStats(priorData)
 
-  if (recent.ndviMean === null || prior.ndviMean === null) return null
+  if (recent.ndviMean === null || prior.ndviMean === null) {
+    return {
+      __debugError: `200 OK but no NDVI stats. recentData keys: ${JSON.stringify(Object.keys(recentData)).slice(0, 150)} recentData.data: ${JSON.stringify((recentData as { data?: unknown }).data).slice(0, 400)}`,
+    } as never
+  }
 
   // NDVI decrease + NDBI increase = more built-up surface activity (more vehicles, more use)
   const ndviChange = recent.ndviMean - prior.ndviMean
