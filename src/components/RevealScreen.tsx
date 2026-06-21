@@ -94,16 +94,16 @@ export default function RevealScreen({ result, onEdge, onReplay }: Props) {
   })
 
   return (
-    <div className="screen-dark" style={{ padding: 16, maxWidth: 900, margin: '0 auto' }}>
+    <div className="screen-dark" style={{ padding: 16, maxWidth: 1200, margin: '0 auto' }}>
       {/* Header */}
       <div style={{ textAlign: 'center', padding: '20px 0 12px', borderBottom: '0.5px solid rgba(255,255,255,0.1)', marginBottom: 12 }}>
-        <div style={{ fontSize: 10, letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--bear)', marginBottom: 6 }}>
+        <div style={{ fontSize: 14, letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--bear)', marginBottom: 6 }}>
           The reveal
         </div>
-        <h2 style={{ fontSize: 26, fontWeight: 500, color: 'var(--text-primary)' }}>
+        <h2 style={{ fontSize: 30, fontWeight: 500, color: 'var(--text-primary)' }}>
           Same stocks. Different information.
         </h2>
-        <p style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 6, lineHeight: 1.6 }}>
+        <p style={{ fontSize: 15, color: 'var(--text-secondary)', marginTop: 6, lineHeight: 1.6 }}>
           Every stock was rated Buy. The alternative data told a different story on 3 of them.
           The hedge fund knew which 3. You didn&apos;t.
         </p>
@@ -117,22 +117,22 @@ export default function RevealScreen({ result, onEdge, onReplay }: Props) {
           { label: 'Data advantage', val: `$${Math.round(result.dataAdvantage).toLocaleString()}`, color: 'var(--phosphor)', border: 'rgba(159,239,0,0.4)', bg: 'rgba(159,239,0,0.06)' },
         ].map((c) => (
           <div key={c.label} style={{ border: `0.5px solid ${c.border}`, background: c.bg, borderRadius: 8, padding: 12, textAlign: 'center' }}>
-            <div style={{ fontSize: 22, fontWeight: 500, color: c.color }}>{c.val}</div>
-            <div style={{ fontSize: 9, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.08em', marginTop: 3 }}>{c.label}</div>
+            <div style={{ fontSize: 26, fontWeight: 500, color: c.color }}>{c.val}</div>
+            <div style={{ fontSize: 14, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.08em', marginTop: 3 }}>{c.label}</div>
           </div>
         ))}
       </div>
 
       {/* Stock comparison table */}
-      <div style={{ fontSize: 10, fontWeight: 500, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>
+      <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>
         Stock-by-stock — you vs the hedge fund <span style={{ textTransform: 'none', color: 'var(--text-tertiary)', fontWeight: 400 }}>· tap a row for detail</span>
       </div>
       <div style={{ marginBottom: 12, overflowX: 'auto' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 11, fontFamily: 'Courier New, monospace' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 15, fontFamily: 'Courier New, monospace' }}>
           <thead>
             <tr>
               {['Stock', 'Analyst', 'Alt data', 'Result', 'Your P&L', 'Hedge P&L'].map((h) => (
-                <th key={h} style={{ fontSize: 9, fontWeight: 500, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.06em', padding: '5px 6px', borderBottom: '0.5px solid rgba(255,255,255,0.08)', textAlign: h === 'Stock' || h === 'Analyst' ? 'left' : 'right' }}>{h}</th>
+                <th key={h} style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.06em', padding: '5px 6px', borderBottom: '0.5px solid rgba(255,255,255,0.08)', textAlign: h === 'Stock' || h === 'Analyst' ? 'left' : 'right' }}>{h}</th>
               ))}
             </tr>
           </thead>
@@ -140,11 +140,11 @@ export default function RevealScreen({ result, onEdge, onReplay }: Props) {
             {stockRows.map(({ tk, userStockPnL, hedgeStockPnL, traded }) => (
               <tr key={tk.sym} onClick={() => setSelectedStock(tk)} style={{ cursor: 'pointer' }}>
                 <td style={{ padding: '7px 6px', borderBottom: '0.5px solid rgba(255,255,255,0.05)', color: 'var(--text-primary)', fontWeight: 500 }}>{tk.sym}</td>
-                <td style={{ padding: '7px 6px', borderBottom: '0.5px solid rgba(255,255,255,0.05)', color: 'var(--bull)', fontSize: 10 }}>Buy</td>
-                <td style={{ padding: '7px 6px', borderBottom: '0.5px solid rgba(255,255,255,0.05)', color: tk.altDataDir === 'bull' ? 'var(--bull)' : tk.altDataDir === 'bear' ? 'var(--bear)' : 'var(--phosphor)', fontSize: 10, textAlign: 'right' }}>
+                <td style={{ padding: '7px 6px', borderBottom: '0.5px solid rgba(255,255,255,0.05)', color: 'var(--bull)', fontSize: 14 }}>Buy</td>
+                <td style={{ padding: '7px 6px', borderBottom: '0.5px solid rgba(255,255,255,0.05)', color: tk.altDataDir === 'bull' ? 'var(--bull)' : tk.altDataDir === 'bear' ? 'var(--bear)' : 'var(--phosphor)', fontSize: 14, textAlign: 'right' }}>
                   {tk.altDataDir === 'bull' ? 'Bullish' : tk.altDataDir === 'bear' ? 'Bearish' : 'Neutral'}
                 </td>
-                <td style={{ padding: '7px 6px', borderBottom: '0.5px solid rgba(255,255,255,0.05)', color: tk.result >= 0 ? 'var(--bull)' : 'var(--bear)', fontSize: 10, textAlign: 'right' }}>
+                <td style={{ padding: '7px 6px', borderBottom: '0.5px solid rgba(255,255,255,0.05)', color: tk.result >= 0 ? 'var(--bull)' : 'var(--bear)', fontSize: 14, textAlign: 'right' }}>
                   {tk.result >= 0 ? '+' : ''}{Math.round(tk.result * 100)}%
                 </td>
                 <td style={{ padding: '7px 6px', borderBottom: '0.5px solid rgba(255,255,255,0.05)', color: traded ? (userStockPnL >= 0 ? 'var(--bull)' : 'var(--bear)') : 'var(--text-tertiary)', textAlign: 'right' }}>
@@ -161,39 +161,39 @@ export default function RevealScreen({ result, onEdge, onReplay }: Props) {
 
       {/* What the hedge fund knew */}
       <div style={{ background: 'rgba(159,239,0,0.06)', border: '0.5px solid rgba(159,239,0,0.3)', borderRadius: 8, padding: 12, marginBottom: 10 }}>
-        <div style={{ fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--phosphor)', marginBottom: 8 }}>
+        <div style={{ fontSize: 14, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--phosphor)', marginBottom: 8 }}>
           What the hedge fund was reading
         </div>
         {STOCKS.filter(s => s.altDataDir === 'bear').map(tk => (
           <div key={tk.sym} style={{ borderBottom: '0.5px solid rgba(255,255,255,0.06)', paddingBottom: 8, marginBottom: 8 }}>
-            <div style={{ fontSize: 10, fontWeight: 500, color: 'var(--phosphor)', marginBottom: 3 }}>{tk.sym} — {tk.resultNote}</div>
-            <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.6)', lineHeight: 1.5 }}>{tk.hedgeAction}</div>
+            <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--phosphor)', marginBottom: 3 }}>{tk.sym} — {tk.resultNote}</div>
+            <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.6)', lineHeight: 1.5 }}>{tk.hedgeAction}</div>
           </div>
         ))}
         {STOCKS.filter(s => s.altDataDir === 'bull').map(tk => (
           <div key={tk.sym} style={{ borderBottom: '0.5px solid rgba(255,255,255,0.06)', paddingBottom: 6, marginBottom: 6 }}>
-            <div style={{ fontSize: 10, fontWeight: 500, color: 'var(--bull)', marginBottom: 2 }}>{tk.sym} — {tk.resultNote}</div>
-            <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.6)', lineHeight: 1.5 }}>{tk.hedgeAction}</div>
+            <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--bull)', marginBottom: 2 }}>{tk.sym} — {tk.resultNote}</div>
+            <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.6)', lineHeight: 1.5 }}>{tk.hedgeAction}</div>
           </div>
         ))}
       </div>
 
       {/* Claude explanation */}
       <div style={{ background: 'rgba(255,255,255,0.03)', border: '0.5px solid rgba(255,255,255,0.1)', borderRadius: 8, padding: 12, marginBottom: 10 }}>
-        <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.6)', lineHeight: 1.8, fontFamily: 'Courier New, monospace', whiteSpace: 'pre-wrap' }}>
+        <div style={{ fontSize: 15, color: 'rgba(255,255,255,0.6)', lineHeight: 1.8, fontFamily: 'Courier New, monospace', whiteSpace: 'pre-wrap' }}>
           {explanation || 'Generating analysis...'}
         </div>
       </div>
 
       <button
         onClick={onEdge}
-        style={{ display: 'block', width: '100%', padding: 13, background: 'var(--bull)', border: 'none', borderRadius: 6, color: 'var(--bg-void)', fontSize: 13, fontWeight: 500, cursor: 'pointer', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 8, fontFamily: 'Courier New, monospace' }}
+        style={{ display: 'block', width: '100%', padding: 13, background: 'var(--bull)', border: 'none', borderRadius: 6, color: 'var(--bg-void)', fontSize: 17, fontWeight: 500, cursor: 'pointer', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 8, fontFamily: 'Courier New, monospace' }}
       >
         Get the same data they had ↗
       </button>
       <button
         onClick={onReplay}
-        style={{ display: 'block', width: '100%', padding: 10, background: 'transparent', border: '0.5px solid rgba(255,255,255,0.2)', borderRadius: 6, color: 'var(--text-primary)', fontSize: 11, cursor: 'pointer', letterSpacing: '0.06em', textTransform: 'uppercase', fontFamily: 'Courier New, monospace' }}
+        style={{ display: 'block', width: '100%', padding: 10, background: 'transparent', border: '0.5px solid rgba(255,255,255,0.2)', borderRadius: 6, color: 'var(--text-primary)', fontSize: 15, cursor: 'pointer', letterSpacing: '0.06em', textTransform: 'uppercase', fontFamily: 'Courier New, monospace' }}
       >
         Play again
       </button>
@@ -207,57 +207,57 @@ export default function RevealScreen({ result, onEdge, onReplay }: Props) {
           <div onClick={() => setSelectedStock(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20, zIndex: 50 }}>
             <div onClick={e => e.stopPropagation()} style={{ background: 'var(--bg-panel, #111)', border: '0.5px solid rgba(255,255,255,0.15)', borderRadius: 12, padding: 18, maxWidth: 420, width: '100%', maxHeight: '80vh', overflowY: 'auto' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-                <div style={{ fontSize: 18, fontWeight: 500, color: 'var(--text-primary)' }}>{selectedStock.sym}</div>
-                <button onClick={() => setSelectedStock(null)} style={{ background: 'none', border: 'none', color: 'var(--text-tertiary)', fontSize: 18, cursor: 'pointer', padding: 4 }}>✕</button>
+                <div style={{ fontSize: 22, fontWeight: 500, color: 'var(--text-primary)' }}>{selectedStock.sym}</div>
+                <button onClick={() => setSelectedStock(null)} style={{ background: 'none', border: 'none', color: 'var(--text-tertiary)', fontSize: 22, cursor: 'pointer', padding: 4 }}>✕</button>
               </div>
-              <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginBottom: 14 }}>{selectedStock.sector} · analyst rated Buy</div>
+              <div style={{ fontSize: 15, color: 'var(--text-tertiary)', marginBottom: 14 }}>{selectedStock.sector} · analyst rated Buy</div>
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 14 }}>
                 <div style={{ background: 'rgba(255,255,255,0.04)', borderRadius: 8, padding: 10 }}>
-                  <div style={{ fontSize: 9, color: 'var(--text-tertiary)', textTransform: 'uppercase', marginBottom: 3 }}>Alt data said</div>
-                  <div style={{ fontSize: 14, fontWeight: 500, color: selectedStock.altDataDir === 'bull' ? 'var(--bull)' : selectedStock.altDataDir === 'bear' ? 'var(--bear)' : 'var(--phosphor)' }}>
+                  <div style={{ fontSize: 14, color: 'var(--text-tertiary)', textTransform: 'uppercase', marginBottom: 3 }}>Alt data said</div>
+                  <div style={{ fontSize: 18, fontWeight: 500, color: selectedStock.altDataDir === 'bull' ? 'var(--bull)' : selectedStock.altDataDir === 'bear' ? 'var(--bear)' : 'var(--phosphor)' }}>
                     {selectedStock.altDataDir === 'bull' ? 'Bullish' : selectedStock.altDataDir === 'bear' ? 'Bearish' : 'Neutral'}
                   </div>
                 </div>
                 <div style={{ background: 'rgba(255,255,255,0.04)', borderRadius: 8, padding: 10 }}>
-                  <div style={{ fontSize: 9, color: 'var(--text-tertiary)', textTransform: 'uppercase', marginBottom: 3 }}>Actual result</div>
-                  <div style={{ fontSize: 14, fontWeight: 500, color: selectedStock.result >= 0 ? 'var(--bull)' : 'var(--bear)' }}>
+                  <div style={{ fontSize: 14, color: 'var(--text-tertiary)', textTransform: 'uppercase', marginBottom: 3 }}>Actual result</div>
+                  <div style={{ fontSize: 18, fontWeight: 500, color: selectedStock.result >= 0 ? 'var(--bull)' : 'var(--bear)' }}>
                     {selectedStock.result >= 0 ? '+' : ''}{Math.round(selectedStock.result * 100)}%
                   </div>
                 </div>
               </div>
 
-              <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.7)', lineHeight: 1.6, marginBottom: 14, background: 'rgba(159,239,0,0.06)', border: '0.5px solid rgba(159,239,0,0.25)', borderRadius: 8, padding: 10 }}>
+              <div style={{ fontSize: 15, color: 'rgba(255,255,255,0.7)', lineHeight: 1.6, marginBottom: 14, background: 'rgba(159,239,0,0.06)', border: '0.5px solid rgba(159,239,0,0.25)', borderRadius: 8, padding: 10 }}>
                 <span style={{ color: 'var(--phosphor)', fontWeight: 500 }}>{selectedStock.resultNote}</span> — {selectedStock.hedgeAction}
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 14 }}>
                 <div>
-                  <div style={{ fontSize: 9, color: 'var(--text-tertiary)', textTransform: 'uppercase', marginBottom: 3 }}>Your P&L</div>
-                  <div style={{ fontSize: 16, fontWeight: 500, color: row.traded ? (row.userStockPnL >= 0 ? 'var(--bull)' : 'var(--bear)') : 'var(--text-tertiary)' }}>
+                  <div style={{ fontSize: 14, color: 'var(--text-tertiary)', textTransform: 'uppercase', marginBottom: 3 }}>Your P&L</div>
+                  <div style={{ fontSize: 20, fontWeight: 500, color: row.traded ? (row.userStockPnL >= 0 ? 'var(--bull)' : 'var(--bear)') : 'var(--text-tertiary)' }}>
                     {row.traded ? `${row.userStockPnL >= 0 ? '+' : ''}$${Math.round(Math.abs(row.userStockPnL))}` : 'No position'}
                   </div>
                 </div>
                 <div>
-                  <div style={{ fontSize: 9, color: 'var(--text-tertiary)', textTransform: 'uppercase', marginBottom: 3 }}>Hedge fund P&L</div>
-                  <div style={{ fontSize: 16, fontWeight: 500, color: 'var(--bull)' }}>
+                  <div style={{ fontSize: 14, color: 'var(--text-tertiary)', textTransform: 'uppercase', marginBottom: 3 }}>Hedge fund P&L</div>
+                  <div style={{ fontSize: 20, fontWeight: 500, color: 'var(--bull)' }}>
                     {row.hedgeStockPnL >= 0 ? '+' : ''}${Math.round(Math.abs(row.hedgeStockPnL))}
                   </div>
                 </div>
               </div>
 
-              <div style={{ fontSize: 9, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>Your trades on {selectedStock.sym}</div>
+              <div style={{ fontSize: 14, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>Your trades on {selectedStock.sym}</div>
               {trades.length > 0 ? (
                 trades.map((t, i) => (
-                  <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, padding: '5px 0', borderBottom: i < trades.length - 1 ? '0.5px solid rgba(255,255,255,0.06)' : 'none' }}>
+                  <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 15, padding: '5px 0', borderBottom: i < trades.length - 1 ? '0.5px solid rgba(255,255,255,0.06)' : 'none' }}>
                     <span style={{ color: t.side === 'buy' ? 'var(--bull)' : 'var(--bear)', fontWeight: 500, textTransform: 'uppercase' }}>{t.side}</span>
                     <span style={{ color: 'var(--text-secondary)' }}>{t.qty} sh @ ${t.price.toFixed(2)}</span>
                   </div>
                 ))
               ) : (
-                <div style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>No trades placed.</div>
+                <div style={{ fontSize: 15, color: 'var(--text-tertiary)' }}>No trades placed.</div>
               )}
-              <div style={{ fontSize: 10, color: 'var(--text-tertiary)', marginTop: 10 }}>Final price: ${finalPrice.toFixed(2)}</div>
+              <div style={{ fontSize: 14, color: 'var(--text-tertiary)', marginTop: 10 }}>Final price: ${finalPrice.toFixed(2)}</div>
             </div>
           </div>
         )

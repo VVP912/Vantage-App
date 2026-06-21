@@ -318,9 +318,23 @@ export async function GET(req: NextRequest) {
 
   // Aggregate signal
   const availableResults = facilityResults.filter(f => f.dataAvailable && f.satelliteData)
-  const avgActivityScore = availableResults.length > 0
-    ? availableResults.reduce((s, f) => s + (f.satelliteData?.activityScore || 0), 0) / availableResults.length
-    : 0
+
+  // Honest availability: we had a valid token, but if Sentinel Hub
+  // returned no usable data for any facility, report this as genuinely
+  // unavailable rather than silently defaulting to a misleading 0.0 /
+  // "stable" result that looks like real data but isn't.
+  if (availableResults.length === 0) {
+    return NextResponse.json({
+      symbol,
+      available: false,
+      message: 'Sentinel Hub returned no usable imagery for this period — satellite signal temporarily unavailable',
+      facilities: facilityResults,
+      source: 'ESA Copernicus Sentinel-2 (free via Copernicus Data Space Ecosystem)',
+      hedgeFundEquivalent: 'Planet Labs daily imagery ($500k+/year) or Maxar constellation',
+    })
+  }
+
+  const avgActivityScore = availableResults.reduce((s, f) => s + (f.satelliteData?.activityScore || 0), 0) / availableResults.length
 
   const aggregateDirection = avgActivityScore > 2 ? 'elevated' : avgActivityScore < -2 ? 'reduced' : 'stable'
   const aggregateSignal = avgActivityScore > 2 ? 'bull' : avgActivityScore < -2 ? 'bear' : 'neut'
@@ -332,7 +346,7 @@ export async function GET(req: NextRequest) {
     aggregateActivityScore: parseFloat(avgActivityScore.toFixed(2)),
     aggregateDirection,
     aggregateSignal,
-    aggregateInterpretation: `${symbol} facility satellite analysis (last 30 days vs prior 30 days): ${aggregateDirection} activity across ${availableResults.length} monitored location${availableResults.length !== 1 ? 's' : ''}. ${aggregateDirection === 'elevated' ? 'Increased vehicle/surface presence suggests stronger operational momentum than analyst models may capture.' : aggregateDirection === 'reduced' ? 'Reduced facility activity may signal weaker operational pace ahead of earnings.' : 'Stable activity — no significant operational change detected from orbit.'}`,
+    aggregateInterpretation: `${aggregateDirection === 'elevated' ? 'Elevated' : aggregateDirection === 'reduced' ? 'Reduced' : 'Stable'} activity across ${availableResults.length} location${availableResults.length !== 1 ? 's' : ''} (30d). ${aggregateDirection === 'elevated' ? 'Stronger momentum than analysts may capture.' : aggregateDirection === 'reduced' ? 'Weaker pace ahead of earnings.' : 'No significant change detected.'}`,
     dataSource: 'ESA Copernicus Sentinel-2 L2A — 10m resolution, 5-day revisit, free via CDSE',
     methodology: 'NDVI + NDBI change detection over facility bounding boxes. Reduced NDVI + increased NDBI indicates more vehicle/surface activity.',
     hedgeFundEquivalent: 'Planet Labs SkySat or Maxar WorldView — 30-50cm resolution, daily revisit, $500k+/year',

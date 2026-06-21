@@ -142,8 +142,12 @@ export async function GET(req: NextRequest) {
             name: location.name,
             placeId: location.placeId,
             type: location.type,
+            currentBusyness: null,
+            avgWeeklyBusyness: null,
+            popularTimes: null,
+            signal: 'Unavailable',
             dataAvailable: false,
-            error: String(err),
+            note: 'Live busyness scraping failed for this request — Google Maps key is configured, but the popular-times data source is temporarily unreachable from this server',
           })
         }
       } else {
@@ -160,7 +164,7 @@ export async function GET(req: NextRequest) {
 
   // Aggregate signal across all locations
   const busyScores = results
-    .filter(r => r.currentBusyness !== null)
+    .filter(r => r.currentBusyness !== null && r.currentBusyness !== undefined)
     .map(r => r.currentBusyness as number)
 
   const avgScore = busyScores.length > 0
@@ -171,12 +175,17 @@ export async function GET(req: NextRequest) {
     ? avgScore > 65 ? 'bull' : avgScore < 35 ? 'bear' : 'neut'
     : 'neut'
 
+  const hasKey = !!process.env.GOOGLE_MAPS_API_KEY
+
   const aggregateInterpretation = avgScore !== null
-    ? `${symbol} locations averaging ${avgScore}/100 busyness score right now. ${avgScore > 65 ? 'Above-average activity suggests strong operational momentum.' : avgScore < 35 ? 'Below-average activity may signal weaker-than-expected performance.' : 'Normal activity levels — no strong directional signal.'}`
-    : `Foot traffic data loading — add Google Maps API key to enable real-time busyness scores for ${symbol} locations.`
+    ? `${avgScore}/100 busyness right now. ${avgScore > 65 ? 'Above-average — strong momentum.' : avgScore < 35 ? 'Below-average — possible weakness.' : 'Normal — no strong signal.'}`
+    : hasKey
+    ? `Live data temporarily unavailable for ${symbol}.`
+    : `Add Google Maps API key to enable foot traffic.`
 
   return NextResponse.json({
     symbol,
+    available: avgScore !== null,
     locations: results,
     aggregateScore: avgScore,
     aggregateSignal,
