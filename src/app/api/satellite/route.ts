@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 
+export const dynamic = 'force-dynamic'
+
 // Hardcoded coordinates for key company facilities
 // Bounding boxes [west, south, east, north] in WGS84
 const FACILITY_COORDS: Record<string, {
