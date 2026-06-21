@@ -168,14 +168,14 @@ export default function RevealScreen({ result, onEdge, onReplay }: Props) {
           <div key={tk.sym} style={{ borderBottom: '0.5px solid rgba(255,255,255,0.06)', paddingBottom: 8, marginBottom: 8 }}>
             <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--phosphor)', marginBottom: 3 }}>{tk.sym} — {tk.resultNote}</div>
             <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.6)', lineHeight: 1.5 }}>{tk.hedgeAction}</div>
-            <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', lineHeight: 1.5, marginTop: 3 }}>🛰️ Satellite (this quarter): {tk.satelliteSignal}</div>
+            <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.55)', lineHeight: 1.5, marginTop: 3 }}>🛰️ Satellite (this quarter): {tk.satelliteSignal}</div>
           </div>
         ))}
         {STOCKS.filter(s => s.altDataDir === 'bull').map(tk => (
           <div key={tk.sym} style={{ borderBottom: '0.5px solid rgba(255,255,255,0.06)', paddingBottom: 6, marginBottom: 6 }}>
             <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--bull)', marginBottom: 2 }}>{tk.sym} — {tk.resultNote}</div>
             <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.6)', lineHeight: 1.5 }}>{tk.hedgeAction}</div>
-            <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', lineHeight: 1.5, marginTop: 3 }}>🛰️ Satellite (this quarter): {tk.satelliteSignal}</div>
+            <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.55)', lineHeight: 1.5, marginTop: 3 }}>🛰️ Satellite (this quarter): {tk.satelliteSignal}</div>
           </div>
         ))}
       </div>
@@ -232,7 +232,7 @@ export default function RevealScreen({ result, onEdge, onReplay }: Props) {
               <div style={{ fontSize: 15, color: 'rgba(255,255,255,0.7)', lineHeight: 1.6, marginBottom: 6, background: 'rgba(159,239,0,0.06)', border: '0.5px solid rgba(159,239,0,0.25)', borderRadius: 8, padding: 10 }}>
                 <span style={{ color: 'var(--phosphor)', fontWeight: 500 }}>{selectedStock.resultNote}</span> — {selectedStock.hedgeAction}
               </div>
-              <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.45)', lineHeight: 1.5, marginBottom: 14 }}>
+              <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.55)', lineHeight: 1.5, marginBottom: 14 }}>
                 🛰️ Satellite (this quarter): {selectedStock.satelliteSignal}
               </div>
 
