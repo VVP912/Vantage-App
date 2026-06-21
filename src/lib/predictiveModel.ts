@@ -62,7 +62,7 @@ export const SIGNAL_WEIGHTS: SignalWeight[] = [
   { key: 'edgarVelocity', label: 'SEC Form 4 velocity', weight: 0.14, rationale: 'Same raw EDGAR filing data institutions monitor, unprocessed' },
   { key: 'redditMentionChange', label: 'Reddit sentiment', weight: 0.11, rationale: 'Legitimate retail-attention proxy, but noisier and easier to manipulate' },
   { key: 'priceChangePercent', label: 'Price momentum', weight: 0.08, rationale: 'Public market data, lowest information content of the set' },
-  { key: 'cryptoMacroScore', label: 'Crypto macro (Bybit)', weight: 0.05, rationale: 'Market-wide risk-appetite proxy via BTC/ETH funding rates — not stock-specific, so weighted lowest, but real institutional-style positioning data' },
+  { key: 'cryptoMacroScore', label: 'Crypto macro (CoinGecko)', weight: 0.05, rationale: 'Market-wide risk-appetite proxy via BTC/ETH 24h momentum — not stock-specific, so weighted lowest, but real institutional-style positioning context' },
   { key: 'newsBullishPercent', label: 'News sentiment', weight: 0.05, rationale: 'Most commoditised signal — already priced in, available to all retail' },
 ]
 

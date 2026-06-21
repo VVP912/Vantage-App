@@ -248,8 +248,8 @@ export default function EdgeScreen({ onReplay }: Props) {
   type RedditShape = { found?: boolean; rank?: number; mentions?: number; mentionChange?: number; interpretation?: string; retailInterest?: string }
   type NewsShape = { bullishPercent?: number; bearishPercent?: number; articleCount?: number; sentimentSource?: string; articles?: Array<{ headline: string; source: string; datetime: string }> }
   type QuoteShape = { price?: number; changePercent?: number; volume?: number; avgVolume?: number }
-  type FootShape = { aggregateScore?: number | null; aggregateSignal?: string; aggregateInterpretation?: string; locationsMonitored?: number; locations?: Array<{ name: string; type: string; currentBusyness?: number | null; signal?: string }> }
-  type SatShape = { available?: boolean; aggregateActivityScore?: number; aggregateDirection?: string; aggregateInterpretation?: string; facilities?: Array<{ name: string; type: string; satelliteData?: { direction: string; activityScore: number; interpretation: string } | null }> }
+  type FootShape = { available?: boolean; hasKey?: boolean; aggregateScore?: number | null; aggregateSignal?: string; aggregateInterpretation?: string; locationsMonitored?: number; locations?: Array<{ name: string; type: string; currentBusyness?: number | null; signal?: string }> }
+  type SatShape = { available?: boolean; aggregateActivityScore?: number; aggregateDirection?: string; aggregateInterpretation?: string; message?: string; setupUrl?: string; facilities?: Array<{ name: string; type: string; satelliteData?: { direction: string; activityScore: number; interpretation: string } | null }> }
   type CryptoShape = { available?: boolean; macroScore: number; interpretation?: string; detail?: Array<{ symbol: string; lastPrice: number; change24hPercent: number; fundingRatePercent: number }> }
 
   const insider = sig?.insiderData as InsiderDataShape | null
@@ -337,13 +337,13 @@ export default function EdgeScreen({ onReplay }: Props) {
             {card(<>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
                 <div style={{ fontSize: 15, fontWeight: 500, color: 'var(--text-primary)' }}>Satellite imagery</div>
-                {badge(sat?.available ? (satDir === 'elevated' ? 'Active' : satDir === 'reduced' ? 'Quiet' : 'Stable') : 'Setup needed', satDir === 'elevated' ? 'var(--bull)' : satDir === 'reduced' ? 'var(--bear)' : 'var(--neutral)', satDir === 'elevated' ? 'var(--bull-dim)' : satDir === 'reduced' ? 'var(--bear-dim)' : 'var(--neutral-dim)')}
+                {badge(sat?.available ? (satDir === 'elevated' ? 'Active' : satDir === 'reduced' ? 'Quiet' : 'Stable') : sat?.setupUrl ? 'Setup needed' : 'Unavailable', satDir === 'elevated' ? 'var(--bull)' : satDir === 'reduced' ? 'var(--bear)' : 'var(--neutral)', satDir === 'elevated' ? 'var(--bull-dim)' : satDir === 'reduced' ? 'var(--bear-dim)' : 'var(--neutral-dim)')}
               </div>
               <div style={{ fontSize: 24, fontWeight: 500, color: 'var(--text-primary)', fontFamily: 'Courier New, monospace' }}>
-                {sat?.available ? `${(sat.aggregateActivityScore ?? 0) > 0 ? '+' : ''}${sat.aggregateActivityScore?.toFixed(1)} score` : 'Needs setup'}
+                {sat?.available ? `${(sat.aggregateActivityScore ?? 0) > 0 ? '+' : ''}${sat.aggregateActivityScore?.toFixed(1)} score` : sat?.setupUrl ? 'Needs setup' : 'Temporarily unavailable'}
               </div>
               <div style={{ fontSize: 14, color: 'var(--text-secondary)', marginTop: 3, lineHeight: 1.4 }}>
-                {sat?.available ? sat.aggregateInterpretation?.substring(0, 100) + '...' : 'Add SENTINEL_HUB credentials to enable ESA Sentinel-2 NDVI/NDBI analysis'}
+                {sat?.available ? sat.aggregateInterpretation?.substring(0, 100) + '...' : sat?.message || 'Add SENTINEL_HUB credentials to enable ESA Sentinel-2 NDVI/NDBI analysis'}
               </div>
               {sourcePill('ESA Sentinel-2 via Copernicus CDSE · free', true)}
               <div style={{ fontSize: 14, color: 'var(--text-tertiary)', marginTop: 2 }}>Hedge funds pay: Planet Labs $500k+/yr</div>
@@ -353,10 +353,10 @@ export default function EdgeScreen({ onReplay }: Props) {
             {card(<>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
                 <div style={{ fontSize: 15, fontWeight: 500, color: 'var(--text-primary)' }}>Foot traffic</div>
-                {badge(foot?.aggregateScore !== null && foot?.aggregateScore !== undefined ? (footScore! > 60 ? 'High' : footScore! > 35 ? 'Normal' : 'Low') : 'Setup needed', footDir === 'bull' ? 'var(--bull)' : footDir === 'bear' ? 'var(--bear)' : 'var(--neutral)', footDir === 'bull' ? 'var(--bull-dim)' : footDir === 'bear' ? 'var(--bear-dim)' : 'var(--neutral-dim)')}
+                {badge(foot?.aggregateScore !== null && foot?.aggregateScore !== undefined ? (footScore! > 60 ? 'High' : footScore! > 35 ? 'Normal' : 'Low') : foot?.hasKey === false ? 'Setup needed' : 'Unavailable', footDir === 'bull' ? 'var(--bull)' : footDir === 'bear' ? 'var(--bear)' : 'var(--neutral)', footDir === 'bull' ? 'var(--bull-dim)' : footDir === 'bear' ? 'var(--bear-dim)' : 'var(--neutral-dim)')}
               </div>
               <div style={{ fontSize: 24, fontWeight: 500, color: 'var(--text-primary)', fontFamily: 'Courier New, monospace' }}>
-                {foot?.aggregateScore !== null && foot?.aggregateScore !== undefined ? `${foot.aggregateScore}/100` : 'Needs setup'}
+                {foot?.aggregateScore !== null && foot?.aggregateScore !== undefined ? `${foot.aggregateScore}/100` : foot?.hasKey === false ? 'Needs setup' : 'Temporarily unavailable'}
               </div>
               <div style={{ fontSize: 14, color: 'var(--text-secondary)', marginTop: 3, lineHeight: 1.4 }}>
                 {foot?.aggregateInterpretation?.substring(0, 100) || 'Add GOOGLE_MAPS_API_KEY to enable real-time location busyness'}

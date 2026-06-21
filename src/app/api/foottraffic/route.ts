@@ -186,6 +186,7 @@ export async function GET(req: NextRequest) {
   return NextResponse.json({
     symbol,
     available: avgScore !== null,
+    hasKey,
     locations: results,
     aggregateScore: avgScore,
     aggregateSignal,
