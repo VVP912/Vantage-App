@@ -217,7 +217,11 @@ function evaluatePixel(samples) {
       }
     )
 
-    if (!res.ok) return null
+    if (!res.ok) {
+      const errBody = await res.text().catch(() => '')
+      console.error(`Sentinel Hub statistics API error for ${facilityName}: ${res.status} ${errBody.slice(0, 500)}`)
+      return { __debugError: `${res.status}: ${errBody.slice(0, 300)}` }
+    }
     return res.json()
   }
 
@@ -225,6 +229,12 @@ function evaluatePixel(samples) {
     makeRequest(toISO(thirtyDaysAgo), toISO(now)),
     makeRequest(toISO(sixtyDaysAgo), toISO(thirtyDaysAgo)),
   ])
+
+  const recentErr = (recentData as { __debugError?: string })?.__debugError
+  const priorErr = (priorData as { __debugError?: string })?.__debugError
+  if (recentErr || priorErr) {
+    return { __debugError: recentErr || priorErr } as never
+  }
 
   if (!recentData || !priorData) return null
 
@@ -305,13 +315,15 @@ export async function GET(req: NextRequest) {
   const facilityResults = await Promise.all(
     config.facilities.map(async (facility) => {
       const satelliteData = await getFacilityActivity(facility.bbox, token, facility.name)
+      const debugError = (satelliteData as { __debugError?: string } | null)?.__debugError
       return {
         name: facility.name,
         type: facility.type,
+        debugError,
         interpretation: facility.interpretation,
         coordinates: facility.bbox,
         satelliteData,
-        dataAvailable: satelliteData !== null,
+        dataAvailable: satelliteData !== null && !debugError,
       }
     })
   )
