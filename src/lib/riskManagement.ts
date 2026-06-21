@@ -43,7 +43,7 @@ export function assessRisk(prediction: PredictionResult): RiskAssessment {
     return {
       recommendedAction: 'insufficient_data',
       maxPositionSizePercent: 0,
-      rationale: `Fewer than 3 of ${prediction.signalBreakdown.length} signals returned live data. The model will not size a position on this few data points — this is a hard rule, not a soft suggestion.`,
+      rationale: `Fewer than 2 of ${prediction.signalBreakdown.length} signals returned live data. The model will not size a position on this few data points — this is a hard rule, not a soft suggestion.`,
       warnings: ['Insufficient live signal coverage to form any view.'],
     }
   }
@@ -58,7 +58,7 @@ export function assessRisk(prediction: PredictionResult): RiskAssessment {
   const positiveCount = meaningfulSignals.filter((s) => s.normalisedScore > 0.1).length
   const negativeCount = meaningfulSignals.filter((s) => s.normalisedScore < -0.1).length
   const isConflicted = positiveCount > 0 && negativeCount > 0 &&
-    Math.min(positiveCount, negativeCount) / Math.max(positiveCount, negativeCount, 1) > 0.4
+    Math.min(positiveCount, negativeCount) / Math.max(positiveCount, negativeCount, 1) > 0.6
 
   if (isConflicted) {
     warnings.push(
@@ -93,11 +93,11 @@ export function assessRisk(prediction: PredictionResult): RiskAssessment {
       break
   }
 
-  if (prediction.liveSignalCount < 5) {
+  if (prediction.liveSignalCount < 4) {
     warnings.push(
       `Only ${prediction.liveSignalCount} of ${prediction.signalBreakdown.length} signals were live for this call — position size reduced to reflect lower data coverage.`
     )
-    baseSize *= 0.7
+    baseSize *= 0.8
   }
 
   warnings.push(

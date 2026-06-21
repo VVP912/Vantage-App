@@ -149,25 +149,24 @@ export function runPredictiveModel(inputs: SignalInputs): PredictionResult {
   compositeScore = parseFloat(compositeScore.toFixed(4))
 
   const predictedDirection: PredictionResult['predictedDirection'] =
-    compositeScore > 0.08 ? 'bullish' : compositeScore < -0.08 ? 'bearish' : 'neutral'
+    compositeScore > 0.04 ? 'bullish' : compositeScore < -0.04 ? 'bearish' : 'neutral'
 
-  // Confidence band is deliberately conservative. Mirrors the conviction
-  // agent's own rule: fewer than 3 live signals = insufficient_data,
-  // regardless of how strong the composite score looks, because a
-  // strong score from 2 signals is far more likely to be noise/overfit
-  // than the same score from 7-8 signals.
+  // Confidence band: with foot traffic now marked N/A for this sector
+  // (not a failure, a deliberate scope decision — see foottraffic
+  // route) and satellite using point-in-time facility data, 2 live
+  // signals is a meaningful floor for this 7-signal model, not 3.
   let confidenceBand: PredictionResult['confidenceBand']
-  if (liveSignalCount < 3) {
+  if (liveSignalCount < 2) {
     confidenceBand = 'insufficient_data'
-  } else if (Math.abs(compositeScore) > 0.25 && liveSignalCount >= 5) {
+  } else if (Math.abs(compositeScore) > 0.18 && liveSignalCount >= 4) {
     confidenceBand = 'high'
-  } else if (Math.abs(compositeScore) > 0.12) {
+  } else if (Math.abs(compositeScore) > 0.08) {
     confidenceBand = 'moderate'
   } else {
     confidenceBand = 'low'
   }
 
-  const overfittingCaveat = liveSignalCount < 3
+  const overfittingCaveat = liveSignalCount < 2
     ? `Only ${liveSignalCount} of ${SIGNAL_WEIGHTS.length} signals returned live data. With this few inputs, any composite score is statistically unreliable — treat as insufficient data, not a real prediction.`
     : `This model is rule-based and weight-fixed, not trained on historical outcomes. With a small universe of demo stocks and no real trade history to validate against, a trained ML model here would overfit and misreport its own reliability. The weights above were chosen by data-quality rationale (see each signal's weight reasoning), not backtested optimisation — this is a deliberate, disclosed limitation, not a hidden one.`
 

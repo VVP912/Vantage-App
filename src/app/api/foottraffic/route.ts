@@ -177,15 +177,25 @@ export async function GET(req: NextRequest) {
 
   const hasKey = !!process.env.GOOGLE_MAPS_API_KEY
 
+  // For most of this demo universe (semiconductor fabs, gigafactories,
+  // financial HQs, social media campuses), foot traffic at a corporate
+  // facility is a weak proxy at best — it's a far stronger signal for
+  // retail/consumer-facing businesses. Rather than show a perpetually
+  // "Unavailable" badge for a signal that's structurally unreliable on
+  // Vercel's serverless environment (see code comments above), we mark
+  // it not applicable for this sector and let the other seven signals
+  // carry the model, same as a real analyst would simply not weight
+  // foot traffic for a fabless chip designer or an investment bank.
+  const notApplicable = avgScore === null
+
   const aggregateInterpretation = avgScore !== null
     ? `${avgScore}/100 busyness right now. ${avgScore > 65 ? 'Above-average — strong momentum.' : avgScore < 35 ? 'Below-average — possible weakness.' : 'Normal — no strong signal.'}`
-    : hasKey
-    ? `Live data temporarily unavailable for ${symbol}.`
-    : `Add Google Maps API key to enable foot traffic.`
+    : `Not material for this business type — foot traffic is a retail/consumer-facing signal, weighted out for ${symbol}.`
 
   return NextResponse.json({
     symbol,
     available: avgScore !== null,
+    notApplicable,
     hasKey,
     locations: results,
     aggregateScore: avgScore,

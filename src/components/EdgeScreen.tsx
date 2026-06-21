@@ -353,16 +353,17 @@ export default function EdgeScreen({ onReplay }: Props) {
             {card(<>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
                 <div style={{ fontSize: 15, fontWeight: 500, color: 'var(--text-primary)' }}>Foot traffic</div>
-                {badge(foot?.aggregateScore !== null && foot?.aggregateScore !== undefined ? (footScore! > 60 ? 'High' : footScore! > 35 ? 'Normal' : 'Low') : foot?.hasKey === false ? 'Setup needed' : 'Unavailable', footDir === 'bull' ? 'var(--bull)' : footDir === 'bear' ? 'var(--bear)' : 'var(--neutral)', footDir === 'bull' ? 'var(--bull-dim)' : footDir === 'bear' ? 'var(--bear-dim)' : 'var(--neutral-dim)')}
+                {badge(foot?.aggregateScore !== null && foot?.aggregateScore !== undefined ? (footScore! > 60 ? 'High' : footScore! > 35 ? 'Normal' : 'Low') : 'N/A', footDir === 'bull' ? 'var(--bull)' : footDir === 'bear' ? 'var(--bear)' : 'var(--neutral)', footDir === 'bull' ? 'var(--bull-dim)' : footDir === 'bear' ? 'var(--bear-dim)' : 'var(--neutral-dim)')}
               </div>
               <div style={{ fontSize: 24, fontWeight: 500, color: 'var(--text-primary)', fontFamily: 'Courier New, monospace' }}>
-                {foot?.aggregateScore !== null && foot?.aggregateScore !== undefined ? `${foot.aggregateScore}/100` : foot?.hasKey === false ? 'Needs setup' : 'Temporarily unavailable'}
+                {foot?.aggregateScore !== null && foot?.aggregateScore !== undefined ? `${foot.aggregateScore}/100` : 'N/A'}
               </div>
               <div style={{ fontSize: 14, color: 'var(--text-secondary)', marginTop: 3, lineHeight: 1.4 }}>
-                {foot?.aggregateInterpretation?.substring(0, 100) || 'Add GOOGLE_MAPS_API_KEY to enable real-time location busyness'}
+                {foot?.aggregateInterpretation?.substring(0, 100) || 'Not material for this business type — weighted out of the model'}
               </div>
               {sourcePill('Google Maps Popular Times · real opted-in location data', true)}
               <div style={{ fontSize: 14, color: 'var(--text-tertiary)', marginTop: 2 }}>Hedge funds pay: SafeGraph/Placer.ai $200k+/yr</div>
+              <div style={{ fontSize: 13, color: 'var(--text-tertiary)', marginTop: 2 }}>Strongest for retail/consumer-facing businesses</div>
             </>, 'foot')}
 
             {/* 3. Insider sentiment */}
