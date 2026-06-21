@@ -145,10 +145,10 @@ async function getFacilityActivity(
 //VERSION=3
 function setup() {
   return {
-    input: [
-      { bands: ["B04", "B08", "B11"], units: "REFLECTANCE" },
-      { bands: ["SCL"], units: "DN" }
-    ],
+    input: [{
+      bands: ["B04", "B08", "B11", "SCL"],
+      units: ["REFLECTANCE", "REFLECTANCE", "REFLECTANCE", "DN"]
+    }],
     output: [
       { id: "ndvi", bands: 1 },
       { id: "ndbi", bands: 1 }
