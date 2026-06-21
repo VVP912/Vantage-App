@@ -68,18 +68,37 @@ export default function RevealScreen({ result, onEdge, onReplay }: Props) {
   }, [result, bearNames, bullNames])
 
   const stockRows = STOCKS.map((tk) => {
-    const userTrades = result.trades.filter((t) => t.sym === tk.sym)
-    const userHolding = result.holdings[tk.sym] || 0
-    let userStockPnL = 0
+    const userTrades = result.trades
+      .filter((t) => t.sym === tk.sym)
+      .sort((a, b) => a.t - b.t)
 
-    if (userHolding > 0 && userTrades.filter((t) => t.side === 'buy').length > 0) {
-      const buyTrades = userTrades.filter((t) => t.side === 'buy')
-      const totalQty = buyTrades.reduce((s, t) => s + t.qty, 0)
-      const totalCost = buyTrades.reduce((s, t) => s + t.price * t.qty, 0)
-      const avgEntry = totalQty > 0 ? totalCost / totalQty : 0
-      const finalP = result.finalPrices[tk.sym] || tk.basePrice
-      userStockPnL = userHolding * (finalP - avgEntry)
+    // Walk every trade in order, netting realized P&L on each sell
+    // against a running average cost basis, then add unrealized P&L
+    // on whatever's still held at game end. This is the same
+    // calculation finalCash - TOTAL captures in aggregate across all
+    // stocks — computing it per-stock the same way is what keeps the
+    // reveal screen's numbers consistent with the headline P&L shown
+    // right after the game, instead of silently dropping realized
+    // gains/losses from stocks that were bought and sold mid-game.
+    let qtyHeld = 0
+    let avgCost = 0
+    let realizedPnL = 0
+
+    for (const t of userTrades) {
+      if (t.side === 'buy') {
+        const totalCost = avgCost * qtyHeld + t.price * t.qty
+        qtyHeld += t.qty
+        avgCost = qtyHeld > 0 ? totalCost / qtyHeld : 0
+      } else {
+        const sellQty = Math.min(t.qty, qtyHeld)
+        realizedPnL += sellQty * (t.price - avgCost)
+        qtyHeld -= sellQty
+      }
     }
+
+    const finalP = result.finalPrices[tk.sym] || tk.basePrice
+    const unrealizedPnL = qtyHeld > 0 ? qtyHeld * (finalP - avgCost) : 0
+    const userStockPnL = realizedPnL + unrealizedPnL
 
     const hedgeStockPnL =
       tk.altDataDir === 'bear'
