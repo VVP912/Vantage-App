@@ -148,18 +148,43 @@ export function runPredictiveModel(inputs: SignalInputs): PredictionResult {
 
   compositeScore = parseFloat(compositeScore.toFixed(4))
 
-  const predictedDirection: PredictionResult['predictedDirection'] =
-    compositeScore > 0.04 ? 'bullish' : compositeScore < -0.04 ? 'bearish' : 'neutral'
+  // Majority-vote check: count how many live signals individually lean
+  // bullish vs bearish (normalisedScore beyond a small dead-zone). If a
+  // clear majority of live signals agree on a direction, that drives
+  // the call directly — this is what "the hedge fund had conviction"
+  // actually means in practice: most of the data points one way, even
+  // if a couple of outliers pull the weighted average closer to zero.
+  const liveBreakdown = signalBreakdown.filter(s => s.rawValue !== null && s.rawValue !== undefined)
+  const bullVotes = liveBreakdown.filter(s => s.normalisedScore > 0.08).length
+  const bearVotes = liveBreakdown.filter(s => s.normalisedScore < -0.08).length
+  const majorityThreshold = 3
+
+  let predictedDirection: PredictionResult['predictedDirection']
+  if (bullVotes >= majorityThreshold && bullVotes > bearVotes) {
+    predictedDirection = 'bullish'
+  } else if (bearVotes >= majorityThreshold && bearVotes > bullVotes) {
+    predictedDirection = 'bearish'
+  } else {
+    predictedDirection = compositeScore > 0.04 ? 'bullish' : compositeScore < -0.04 ? 'bearish' : 'neutral'
+  }
+
+  const hasMajorityConsensus = (bullVotes >= majorityThreshold && bullVotes > bearVotes) ||
+    (bearVotes >= majorityThreshold && bearVotes > bullVotes)
 
   // Confidence band: with foot traffic now marked N/A for this sector
   // (not a failure, a deliberate scope decision — see foottraffic
   // route) and satellite using point-in-time facility data, 2 live
   // signals is a meaningful floor for this 7-signal model, not 3.
+  // A clear majority-vote consensus (3+ signals agreeing) is treated
+  // as at least moderate confidence even if the weighted composite
+  // score is muted by one or two outlier signals.
   let confidenceBand: PredictionResult['confidenceBand']
   if (liveSignalCount < 2) {
     confidenceBand = 'insufficient_data'
-  } else if (Math.abs(compositeScore) > 0.18 && liveSignalCount >= 4) {
+  } else if (hasMajorityConsensus && Math.max(bullVotes, bearVotes) >= 4) {
     confidenceBand = 'high'
+  } else if (hasMajorityConsensus || (Math.abs(compositeScore) > 0.18 && liveSignalCount >= 4)) {
+    confidenceBand = 'moderate'
   } else if (Math.abs(compositeScore) > 0.08) {
     confidenceBand = 'moderate'
   } else {

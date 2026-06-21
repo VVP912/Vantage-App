@@ -58,7 +58,8 @@ export function assessRisk(prediction: PredictionResult): RiskAssessment {
   const positiveCount = meaningfulSignals.filter((s) => s.normalisedScore > 0.1).length
   const negativeCount = meaningfulSignals.filter((s) => s.normalisedScore < -0.1).length
   const isConflicted = positiveCount > 0 && negativeCount > 0 &&
-    Math.min(positiveCount, negativeCount) / Math.max(positiveCount, negativeCount, 1) > 0.6
+    Math.min(positiveCount, negativeCount) / Math.max(positiveCount, negativeCount, 1) > 0.6 &&
+    Math.max(positiveCount, negativeCount) < 3
 
   if (isConflicted) {
     warnings.push(
